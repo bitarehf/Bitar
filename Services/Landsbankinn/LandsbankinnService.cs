@@ -186,21 +186,23 @@ namespace Bitar.Services
                     Console.WriteLine("response StatusCode: " + response.StatusCode);
                     Console.WriteLine("response StatusDescription: " + response.StatusDescription);
                 }
-                doc.Save("request.xml");
+                //doc.Save("request.xml");
 
                 return Deserialize(response.GetResponseStream(), typeResponse);
             }
             catch (Exception e)
             {
-                throw e;
+                _logger.LogError(e.ToString());
             }
+
+            return null;
         }
 
         private object Deserialize(Stream s, Type expectedType)
         {
             XmlDocument doc = new XmlDocument();
             doc.Load(s);
-            doc.Save("response.xml");
+            //doc.Save("response.xml");
 
             XmlNodeReader reader = new XmlNodeReader(doc.DocumentElement);
 
