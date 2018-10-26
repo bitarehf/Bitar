@@ -1,4 +1,5 @@
 using Bitar.Models;
+using KrakenCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -13,19 +14,22 @@ namespace Bitar.Services
     {
         private readonly ILogger _logger;
         private readonly IServiceScopeFactory _scopeFactory;
-        private readonly BitcoinService _bitcoin;
         private Timer _timer;
+        private readonly BitcoinService _bitcoin;
         private LandsbankinnService _landsbankinn;
+        private readonly KrakenService _kraken;
 
         public PaymentService(ILogger<PaymentService> logger,
             IServiceScopeFactory scopeFactory,
             BitcoinService bitcoin,
-            LandsbankinnService landsbankinn)
+            LandsbankinnService landsbankinn,
+            KrakenService kraken)
         {
             _logger = logger;
             _scopeFactory = scopeFactory;
             _bitcoin = bitcoin;
             _landsbankinn = landsbankinn;
+            _kraken = kraken;
 
             if (!string.IsNullOrWhiteSpace(_landsbankinn.sessionId))
             {
@@ -47,7 +51,7 @@ namespace Bitar.Services
 
         public Task StopAsync(CancellationToken cancellationToken)
         {
-            _logger.LogWarning("Payment Service is stopping.");
+            _logger.LogInformation("Payment Service is stopping.");
 
             _timer?.Change(Timeout.Infinite, 0);
 
@@ -56,9 +60,21 @@ namespace Bitar.Services
 
         private async void CheckPayments(object state)
         {
+            decimal ISKEUR = 135m;
+            decimal BTCEUR = 5000m;
+            // if (ISKEUR == decimal.Zero || BTCEUR == decimal.Zero)
+            // {
+            //     _logger.LogCritical("Failed to get exchange rate");
+            //     return;
+            // }
+            // _logger.LogCritical($"Rates: ISKEUR {ISKEUR} BTCEUR {BTCEUR}");
+            //
+            // Money m = new Money(5000 / ISKEUR / BTCEUR, MoneyUnit.BTC);
+            // _logger.LogCritical("Satoshi amount: " + m.Satoshi.ToString());
+
             using (var scope = _scopeFactory.CreateScope())
             {
-                var context = scope.ServiceProvider.GetRequiredService<BitarContext>();
+                var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
                 _logger.LogCritical("Checking transactions");
                 foreach (var transactionA in _landsbankinn.transactions)
                 {
@@ -70,7 +86,7 @@ namespace Bitar.Services
                     }
 
                     _logger.LogCritical("Searching for person with SSN: " + transactionA.SSN);
-                    var person = await context.Persons.FindAsync(transactionA.SSN);
+                    Person person = await context.Persons.FindAsync(transactionA.SSN);
                     if (person == null)
                     {
                         // Todo: Refund.
@@ -84,41 +100,36 @@ namespace Bitar.Services
                         continue;
                     }
 
-                    _logger.LogCritical($"Transaction: {transactionA.Id} not found");
-                    var address = person.BitcoinAddress;
-                    // Todo: Validate bitcoin address.
-                    _logger.LogCritical($"Address: {address}");
+                    _logger.LogCritical($"Transaction {transactionA.Id} has not been paid");
+                    string address = person.BitcoinAddress;
 
-                    // Try to send bitcoin.
-                    Money amount = ConvertISKToMoney(transactionA.Amount);
-                    _logger.LogCritical($"Attempting to pay {amount.Satoshi} satoshis to {address}");
-                    var payment = _bitcoin.MakePayment(address, amount.Satoshi);
+                    // Convert transaction amount (ISK) to Money.
+                    // Bitcoins = ISK / ISKEUR / BTCEUR.
+                    Money amount = new Money(transactionA.Amount / ISKEUR / BTCEUR, MoneyUnit.BTC);
 
-                    
-                    if (payment.Result != null)
+                    if (amount == null)
                     {
-                        transactionA.TxId = payment.Result.ToString();
-                        _logger.LogCritical($"({transactionA.SSN}) {address} paid {amount.Satoshi} satoshis. TxId: {transactionA.TxId}");
+                        _logger.LogWarning("Failed to convert ISK to BTC");
+                        break;
                     }
 
-                    // Add transaction to database.
+                    // Try to send bitcoin.
+                    _logger.LogCritical($"Attempting to pay {amount.Satoshi} satoshis to {address}");
+                    uint256 txId = await _bitcoin.MakePayment(address, amount);
+                    if (txId != null)
+                    {
+                        transactionA.TxId = txId.ToString();
+                        _logger.LogCritical($"({transactionA.SSN}) {address} paid {amount.Satoshi} satoshis. TxId: {transactionA.TxId}");
+                    }
+                    else
+                    {
+                        _logger.LogCritical($"Failed to pay ({transactionA.SSN}) {transactionA.Id} {address} {amount.Satoshi} satoshis.");
+                    }
+
                     context.Transactions.Add(transactionA);
                     await context.SaveChangesAsync();
-
                 }
             }
-        }
-
-        /// <summary>
-        /// Converts <paramref name="amount"/> to <see cref="Money"/>
-        /// </summary>
-        /// <param name="amount">Amount in ISK</param>
-        private Money ConvertISKToMoney(decimal amount)
-        {
-            // Bitcoins = ISK / ISKEUR-ExchangeRate / BTCEUR-ExchangeRate.
-            amount /= 135m; // TODO: Get actual ISKEUR-ExchangeRate.
-            amount /= 5400m; // TODO: Get actual BTCEUR-ExchangeRate.
-            return new Money(amount, MoneyUnit.BTC);
         }
 
         // private void CheckPayments(object state)

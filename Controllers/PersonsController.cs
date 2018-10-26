@@ -11,9 +11,9 @@ namespace Bitar.Controllers
     [ApiController]
     public class PersonsController : ControllerBase
     {
-        private readonly BitarContext _context;
+        private readonly ApplicationDbContext _context;
 
-        public PersonsController(BitarContext context)
+        public PersonsController(ApplicationDbContext context)
         {
             _context = context;
         }

@@ -11,13 +11,11 @@ namespace Bitar.Controllers
     [ApiController]
     public class TransactionsController : ControllerBase
     {
-        private readonly ILogger _logger;
-        private readonly BitarContext _context;
+        private readonly ApplicationDbContext _context;
         private LandsbankinnService _landsbankinn;
 
-        public TransactionsController(ILogger<TransactionsController> logger, 
-            LandsbankinnService landsbankinn,
-            BitarContext context)
+        public TransactionsController(LandsbankinnService landsbankinn,
+            ApplicationDbContext context)
         {
             _landsbankinn = landsbankinn;
             _context = context;

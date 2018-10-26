@@ -1,7 +1,8 @@
 using Bitar.Models;
+using Bitar.Models.Settings;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Models.Settings;
+using Microsoft.IdentityModel.Tokens;
 using NBitcoin;
 using NBitcoin.RPC;
 using System;

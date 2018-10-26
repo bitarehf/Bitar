@@ -20,6 +20,10 @@ namespace Bitar
         public static IWebHostBuilder CreateWebHostBuilder(string[] args) =>
             WebHost.CreateDefaultBuilder(args)
                 .UseUrls("http://localhost:5000")
+                .ConfigureAppConfiguration((hostingContext, config) =>
+                {
+                    config.AddUserSecrets<Startup>(optional: false);
+                })
                 .UseStartup<Startup>();
     }
 }

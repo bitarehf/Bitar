@@ -1,4 +1,4 @@
-namespace Models.Settings
+namespace Bitar.Models.Settings
 {
     public class BitcoinSettings
     {

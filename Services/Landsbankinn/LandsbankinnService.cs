@@ -1,8 +1,8 @@
 using Bitar.Models;
+using Bitar.Models.Settings;
 using Landsbankinn;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Models.Settings;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -11,6 +11,7 @@ using System.Reflection;
 using System.Security.Cryptography.X509Certificates;
 using System.Security.Cryptography.Xml;
 using System.Text;
+using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.Serialization;
 
@@ -64,6 +65,38 @@ namespace Bitar.Services
             sessionId = oResponse.seta;
         }
 
+        public async Task<decimal> FetchISKEUR()
+        {
+            var request = new LI_Fyrirspurn_gengi_gjaldmidla()
+            {
+                dags = DateTime.Today,
+                gengistegund = LI_gengistegund_type.A, // Almennt Landsbankagengi.
+                seta = "",
+                version = 1.1m
+            };
+
+            try
+            {
+                LI_Fyrirspurn_gengi_gjaldmidla_svar response = (LI_Fyrirspurn_gengi_gjaldmidla_svar)SendAndReceive(request, Type.GetType("Landsbankinn.LI_Fyrirspurn_gengi_gjaldmidla_svar"));
+                if (response != null)
+                {
+                    foreach (var item in response.gjaldmidlar)
+                    {
+                        if (item.iso_takn == LI_ISO_takn_gjaldmidils_type.EUR)
+                        {
+                            return item.solugengi;
+                        }
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e.ToString());
+            }
+            
+            return decimal.Zero;
+        }
+
         public bool Pay(string utibu, string hb, string reikingsnr, string kennitala, decimal amount)
         {
             try
@@ -103,7 +136,7 @@ namespace Bitar.Services
                 LI_Greidsla_svar response = (LI_Greidsla_svar)SendAndReceive(payment, Type.GetType("Landsbankinn.LI_Greidsla_svar"));
                 if (response != null)
                 {
-                    Console.WriteLine("Payment has been performed: id = " + response.id_bokun.ToString("F0"));
+                    _logger.LogInformation("Payment has been performed: id = " + response.id_bokun.ToString("F0"));
                     return true;
                 }
             }
