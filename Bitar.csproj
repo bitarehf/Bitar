@@ -13,8 +13,4 @@
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="2.1.2" />
   </ItemGroup>
 
-  <ItemGroup>
-    <EmbeddedResource Include="Bitar.pfx" />
-  </ItemGroup>
-
 </Project>
