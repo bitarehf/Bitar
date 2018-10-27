@@ -263,9 +263,6 @@ __pycache__/
 # Visual Studio Code Settings
 .vscode
 
-# Certificates
-*.pfx
-
 # Debug files
 request.xml
 response.xml
