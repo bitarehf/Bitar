@@ -31,7 +31,7 @@ namespace Bitar.Services
         {
             _logger = logger;
             _options = options.Value;
-            _certificate = new X509Certificate2(LoadCertificate("Bitar.Bitar.pfx"), _options.CertificatePassword);
+            _certificate = new X509Certificate2(Encoding.UTF8.GetBytes(_options.Certificate));
             Login(_options.Username, _options.Password);
         }
 
