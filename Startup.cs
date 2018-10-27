@@ -40,7 +40,7 @@ namespace Bitar
             services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseNpgsql(Configuration.GetConnectionString("DefaultConnection")));
 
-            services.AddIdentity<ApplicationUser, IdentityRole>()
+            services.AddDefaultIdentity<ApplicationUser>()
                 .AddEntityFrameworkStores<ApplicationDbContext>()
                 .AddDefaultTokenProviders();
 
@@ -58,7 +58,7 @@ namespace Bitar
                 options.User.RequireUniqueEmail = true;
             });
 
-            //JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear(); // Remove default claims.
+            JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear(); // Remove default claims.
             services
                 .AddAuthentication(options =>
                 {
@@ -77,7 +77,7 @@ namespace Bitar
                     {
                         ValidIssuer = "https://bitar.is",
                         ValidAudience = "https://bitar.is",
-                        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration.GetValue<string>("JwtSettings:JwtKey"))),
+                        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration.GetSection("JwtSettings:JwtKey").Value)),
                     };
                 });
 
