@@ -35,18 +35,6 @@ namespace Bitar.Services
             Login(_options.Username, _options.Password);
         }
 
-        private byte[] LoadCertificate(string location)
-        {
-            var assembly = Assembly.GetEntryAssembly();
-            var resourceStream = assembly.GetManifestResourceStream(location);
-            using (var reader = new StreamReader(resourceStream))
-            {
-                byte[] b = new byte[resourceStream.Length];
-                resourceStream.Read(b, 0, b.Length);
-                return b;
-            }
-        }
-
         private bool signed
         {
             get { return _certificate != null; }
