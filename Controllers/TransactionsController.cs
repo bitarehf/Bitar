@@ -1,5 +1,6 @@
 ﻿using Bitar.Models;
 using Bitar.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using System.Collections.Generic;
@@ -7,6 +8,7 @@ using System.Threading.Tasks;
 
 namespace Bitar.Controllers
 {
+    [Authorize]
     [Route("[controller]")]
     [ApiController]
     public class TransactionsController : ControllerBase
