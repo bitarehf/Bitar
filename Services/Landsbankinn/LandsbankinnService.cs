@@ -54,7 +54,7 @@ namespace Bitar.Services
             sessionId = oResponse.seta;
         }
 
-        public async Task<decimal> FetchISKEUR()
+        public async Task<List<Stock>> FetchCurrencyUpdates()
         {
             var request = new LI_Fyrirspurn_gengi_gjaldmidla()
             {
@@ -63,6 +63,8 @@ namespace Bitar.Services
                 seta = "",
                 version = 1.1m
             };
+
+            List<Stock> stocks = new List<Stock>();
 
             try
             {
@@ -73,7 +75,18 @@ namespace Bitar.Services
                     {
                         if (item.iso_takn == LI_ISO_takn_gjaldmidils_type.EUR)
                         {
-                            return item.solugengi;
+                            stocks.Add(new Stock(){
+                                Symbol = Symbol.EUR,
+                                Price = item.solugengi
+                            });
+                        }
+
+                        if (item.iso_takn == LI_ISO_takn_gjaldmidils_type.USD)
+                        {
+                            stocks.Add(new Stock(){
+                                Symbol = Symbol.USD,
+                                Price = item.solugengi
+                            });
                         }
                     }
                 }
@@ -83,7 +96,7 @@ namespace Bitar.Services
                 _logger.LogError(e.ToString());
             }
             
-            return decimal.Zero;
+            return stocks;
         }
 
         public bool Pay(string utibu, string hb, string reikingsnr, string kennitala, decimal amount)

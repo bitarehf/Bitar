@@ -5,6 +5,8 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using NBitcoin;
 using System;
+using System.Net.WebSockets;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -16,20 +18,24 @@ namespace Bitar.Services
         private readonly IServiceScopeFactory _scopeFactory;
         private Timer _timer;
         private readonly BitcoinService _bitcoin;
-        private LandsbankinnService _landsbankinn;
+        private readonly LandsbankinnService _landsbankinn;
         private readonly KrakenService _kraken;
+        private readonly CurrencyService _stock;
 
-        public PaymentService(ILogger<PaymentService> logger,
+        public PaymentService(
+            ILogger<PaymentService> logger,
             IServiceScopeFactory scopeFactory,
             BitcoinService bitcoin,
             LandsbankinnService landsbankinn,
-            KrakenService kraken)
+            KrakenService kraken,
+            StockService stock)
         {
             _logger = logger;
             _scopeFactory = scopeFactory;
             _bitcoin = bitcoin;
             _landsbankinn = landsbankinn;
             _kraken = kraken;
+            _stock = stock;
 
             if (!string.IsNullOrWhiteSpace(_landsbankinn.sessionId))
             {
@@ -41,12 +47,14 @@ namespace Bitar.Services
             }
         }
 
-        public Task StartAsync(CancellationToken cancellationToken)
+        public async Task StartAsync(CancellationToken cancellationToken)
         {
             _logger.LogInformation("Payment Service is starting.");
-            _timer = new Timer(CheckPayments, null, TimeSpan.Zero, TimeSpan.FromMinutes(1));
 
-            return Task.CompletedTask;
+            // Wait 15 seconds to allow CurrencyService to get updates.
+            _timer = new Timer(CheckPayments, null, TimeSpan.FromSeconds(15), TimeSpan.FromMinutes(1));
+
+            await Task.CompletedTask;
         }
 
         public Task StopAsync(CancellationToken cancellationToken)
@@ -60,17 +68,19 @@ namespace Bitar.Services
 
         private async void CheckPayments(object state)
         {
-            decimal ISKEUR = 135m;
-            decimal BTCEUR = 5000m;
-            // if (ISKEUR == decimal.Zero || BTCEUR == decimal.Zero)
-            // {
-            //     _logger.LogCritical("Failed to get exchange rate");
-            //     return;
-            // }
-            // _logger.LogCritical($"Rates: ISKEUR {ISKEUR} BTCEUR {BTCEUR}");
-            //
-            // Money m = new Money(5000 / ISKEUR / BTCEUR, MoneyUnit.BTC);
-            // _logger.LogCritical("Satoshi amount: " + m.Satoshi.ToString());
+            decimal ISK = _stock.Currencies.ISK;
+            decimal BTC = _stock.Currencies.BTC;
+
+            if (BTC == decimal.Zero)
+            {
+                _logger.LogCritical("Failed to get BTC exchange rate.");
+                return;
+            }
+            else if (ISK == decimal.Zero)
+            {
+                _logger.LogCritical("Failed to get ISK exchange rate.");
+                return;
+            }
 
             using (var scope = _scopeFactory.CreateScope())
             {
@@ -80,7 +90,6 @@ namespace Bitar.Services
                 {
                     if (transactionA.Amount < 500)
                     {
-                        // Todo: Refund.
                         _logger.LogCritical("Transaction less than 500 ISK");
                         continue;
                     }
@@ -89,7 +98,6 @@ namespace Bitar.Services
                     Person person = await context.Persons.FindAsync(transactionA.SSN);
                     if (person == null)
                     {
-                        // Todo: Refund.
                         _logger.LogCritical($"{transactionA.SSN} not found");
                         continue;
                     }
@@ -105,7 +113,7 @@ namespace Bitar.Services
 
                     // Convert transaction amount (ISK) to Money.
                     // Bitcoins = ISK / ISKEUR / BTCEUR.
-                    Money amount = new Money(transactionA.Amount / ISKEUR / BTCEUR, MoneyUnit.BTC);
+                    Money amount = new Money(transactionA.Amount / ISK / BTC, MoneyUnit.BTC);
 
                     if (amount == null)
                     {
