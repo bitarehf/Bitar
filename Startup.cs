@@ -58,7 +58,6 @@ namespace Bitar
                 options.User.RequireUniqueEmail = true;
             });
 
-            JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear(); // Remove default claims.
             services
                 .AddAuthentication(options =>
                 {
@@ -90,9 +89,8 @@ namespace Bitar
             services.AddSingleton<BitcoinService>();
             services.AddSingleton<LandsbankinnService>();
             services.AddSingleton<KrakenService>();
-            services.AddHostedService<CurrencyService>();
+            services.AddSingleton<StockService>();
             services.AddHostedService<PaymentService>();
-
 
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
 
