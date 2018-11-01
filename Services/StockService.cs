@@ -15,7 +15,7 @@ namespace Bitar.Services
     public class StockService : IHostedService
     {
         private readonly ILogger<StockService> _logger;
-        private readonly IHubContext<CurrencyHub> _hubContext;
+        private readonly IHubContext<StockHub> _hubContext;
         private readonly LandsbankinnService _landsbankinn;
         private readonly KrakenService _kraken;
         private Timer _timer;
@@ -26,7 +26,7 @@ namespace Bitar.Services
 
         public StockService(
             ILogger<StockService> logger,
-            IHubContext<CurrencyHub> hubContext,
+            IHubContext<StockHub> hubContext,
             LandsbankinnService landsbankinn,
             KrakenService kraken)
         {
@@ -38,7 +38,8 @@ namespace Bitar.Services
 
         public async Task StartAsync(CancellationToken cancellationToken)
         {
-            MarketState = MarketState.Open;
+            _logger.LogInformation("StockService is starting.");
+
             _timer = new Timer(UpdateStockPrices, null, TimeSpan.Zero, TimeSpan.FromMinutes(1));
 
             await Task.CompletedTask;
@@ -46,7 +47,7 @@ namespace Bitar.Services
 
         public async Task StopAsync(CancellationToken cancellationToken)
         {
-            _logger.LogInformation("CurrencyService is stopping.");
+            _logger.LogInformation("StockService is stopping.");
 
             _timer?.Change(Timeout.Infinite, 0);
 
@@ -55,30 +56,50 @@ namespace Bitar.Services
 
         public async void UpdateStockPrices(object state)
         {
-            List<Stock> currencies = await _landsbankinn.FetchCurrencyUpdates();
-            decimal btceur = await _kraken.FetchBTCEUR();
-            decimal eurisk = decimal.Zero;
+            List<Stock> stocks = await _landsbankinn.FetchCurrencyUpdates();
 
-            foreach (var currency in currencies)
+            decimal eurisk = decimal.Zero;
+            foreach (var stock in stocks)
             {
-                if (currency.Symbol == Symbol.EUR)
+                if (stock.Price == decimal.Zero)
                 {
-                    eurisk = currency.Price;
+                    _logger.LogCritical($"Failed to update {stock.Symbol}");
+                    CloseMarket();
+                }
+
+                if (stock.Symbol == Symbol.EUR)
+                {
+                    eurisk = stock.Price;
                     break;
                 }
             }
-            
+
+            decimal btceur = await _kraken.FetchBTCEUR();
+            if (btceur == decimal.Zero)
+            {
+                _logger.LogCritical("Failed to update btceur.");
+                CloseMarket();
+            }
+
             decimal btcisk = eurisk * btceur;
 
-            Stocks = new List<Stock>()
-            {
-                { new Stock() { Symbol = Symbol.BTC, Price = btcisk }}
-            };
-            
-            Stocks.AddRange(currencies);
+            stocks.Add(new Stock() { Symbol = Symbol.BTC, Price = btcisk });
+            Stocks = stocks;
+            OpenMarket();
 
             // Send update to all SignalR Clients.
             await _hubContext.Clients.All.SendAsync("StocksUpdated", Stocks);
+        }
+
+        public void OpenMarket()
+        {
+            _logger.LogCritical("Market opened.");
+            MarketState = MarketState.Open;
+        }
+        public void CloseMarket()
+        {
+            _logger.LogCritical("Market closed.");
+            MarketState = MarketState.Closed;
         }
 
         // public async Task<List<Stock>> UpdateCurrencies(object state)
@@ -108,5 +129,5 @@ namespace Bitar.Services
         Closed
     }
 
-    
+
 }

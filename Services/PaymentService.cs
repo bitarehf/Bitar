@@ -5,6 +5,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using NBitcoin;
 using System;
+using System.Collections.Generic;
 using System.Net.WebSockets;
 using System.Text;
 using System.Threading;
@@ -20,7 +21,7 @@ namespace Bitar.Services
         private readonly BitcoinService _bitcoin;
         private readonly LandsbankinnService _landsbankinn;
         private readonly KrakenService _kraken;
-        private readonly CurrencyService _stock;
+        private readonly StockService _stock;
 
         public PaymentService(
             ILogger<PaymentService> logger,
@@ -49,7 +50,7 @@ namespace Bitar.Services
 
         public async Task StartAsync(CancellationToken cancellationToken)
         {
-            _logger.LogInformation("Payment Service is starting.");
+            _logger.LogInformation("PaymentService is starting.");
 
             // Wait 15 seconds to allow CurrencyService to get updates.
             _timer = new Timer(CheckPayments, null, TimeSpan.FromSeconds(15), TimeSpan.FromMinutes(1));
@@ -59,7 +60,7 @@ namespace Bitar.Services
 
         public Task StopAsync(CancellationToken cancellationToken)
         {
-            _logger.LogInformation("Payment Service is stopping.");
+            _logger.LogInformation("PaymentService is stopping.");
 
             _timer?.Change(Timeout.Infinite, 0);
 
@@ -68,17 +69,22 @@ namespace Bitar.Services
 
         private async void CheckPayments(object state)
         {
-            decimal ISK = _stock.Currencies.ISK;
-            decimal BTC = _stock.Currencies.BTC;
+            List<Stock> stocks = _stock.Stocks;
+            decimal BTCISK = decimal.Zero;
 
-            if (BTC == decimal.Zero)
+            if (_stock.MarketState == MarketState.Open)
             {
-                _logger.LogCritical("Failed to get BTC exchange rate.");
-                return;
+                foreach (var stock in stocks)
+                {
+                    if (stock.Symbol == Symbol.ISK)
+                    {
+                        BTCISK = stock.Price;
+                    }
+                }
             }
-            else if (ISK == decimal.Zero)
+            else
             {
-                _logger.LogCritical("Failed to get ISK exchange rate.");
+                _logger.LogCritical("Not checking transactions because market is closed.");
                 return;
             }
 
@@ -111,9 +117,8 @@ namespace Bitar.Services
                     _logger.LogCritical($"Transaction {transactionA.Id} has not been paid");
                     string address = person.BitcoinAddress;
 
-                    // Convert transaction amount (ISK) to Money.
-                    // Bitcoins = ISK / ISKEUR / BTCEUR.
-                    Money amount = new Money(transactionA.Amount / ISK / BTC, MoneyUnit.BTC);
+                    // Convert ISK transaction amount  to Money.
+                    Money amount = new Money(1 / BTCISK * transactionA.Amount, MoneyUnit.BTC);
 
                     if (amount == null)
                     {
