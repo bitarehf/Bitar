@@ -119,7 +119,7 @@ namespace Bitar
 
             app.UseSignalR(routes =>
             {
-                routes.MapHub<CurrencyHub>("/currency");
+                routes.MapHub<StockHub>("/stocks");
             });
         }
     }
