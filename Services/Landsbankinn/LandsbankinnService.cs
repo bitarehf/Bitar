@@ -25,7 +25,7 @@ namespace Bitar.Services
         private readonly string _url = "https://b2b.fbl.is/lib2b.dll?processXML";
         public string sessionId;
         private X509Certificate2 _certificate;
-        public List<Transaction> transactions = new List<Transaction>();
+        public HashSet<Transaction> transactions = new HashSet<Transaction>();
 
         public LandsbankinnService(ILogger<LandsbankinnService> logger, IOptions<LandsbankinnSettings> options)
         {
