@@ -52,7 +52,9 @@ namespace Bitar.Services
         {
             _logger.LogInformation("PaymentService is starting.");
 
-            // Wait 15 seconds to allow CurrencyService to get updates.
+            await _stock.StartAsync(cancellationToken);
+
+            // Wait 15 seconds to allow StockService to get updates.
             _timer = new Timer(CheckPayments, null, TimeSpan.FromSeconds(15), TimeSpan.FromMinutes(1));
 
             await Task.CompletedTask;
