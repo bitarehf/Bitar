@@ -78,7 +78,7 @@ namespace Bitar.Services
             {
                 foreach (var stock in stocks)
                 {
-                    if (stock.Symbol == Symbol.ISK)
+                    if (stock.Symbol == Symbol.BTC)
                     {
                         BTCISK = stock.Price;
                     }
