@@ -120,7 +120,7 @@ namespace Bitar.Services
                     string address = person.BitcoinAddress;
 
                     // Convert ISK transaction amount  to Money.
-                    Money amount = new Money(1 / BTCISK * transactionA.Amount, MoneyUnit.BTC);
+                    Money amount = new Money((1 / BTCISK * transactionA.Amount) * 0.995m, MoneyUnit.BTC);
 
                     if (amount == null)
                     {
