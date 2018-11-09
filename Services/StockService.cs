@@ -65,12 +65,12 @@ namespace Bitar.Services
                 {
                     _logger.LogCritical($"Failed to update {stock.Symbol}");
                     CloseMarket();
+                    return;
                 }
 
                 if (stock.Symbol == Symbol.EUR)
                 {
                     eurisk = stock.Price;
-                    break;
                 }
             }
 
@@ -79,6 +79,7 @@ namespace Bitar.Services
             {
                 _logger.LogCritical("Failed to update btceur.");
                 CloseMarket();
+                return;
             }
 
             decimal btcisk = eurisk * btceur;
@@ -95,7 +96,7 @@ namespace Bitar.Services
         {
             if (MarketState != MarketState.Open)
             {
-                _logger.LogInformation("Market opened.");
+                _logger.LogCritical("Market opened.");
                 MarketState = MarketState.Open;
             }
         }
