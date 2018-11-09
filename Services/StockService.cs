@@ -93,13 +93,20 @@ namespace Bitar.Services
 
         public void OpenMarket()
         {
-            _logger.LogCritical("Market opened.");
-            MarketState = MarketState.Open;
+            if (MarketState != MarketState.Open)
+            {
+                _logger.LogInformation("Market opened.");
+                MarketState = MarketState.Open;
+            }
         }
+        
         public void CloseMarket()
         {
-            _logger.LogCritical("Market closed.");
-            MarketState = MarketState.Closed;
+            if (MarketState != MarketState.Closed)
+            {
+                _logger.LogCritical("Market closed.");
+                MarketState = MarketState.Closed;
+            }
         }
 
         // public async Task<List<Stock>> UpdateCurrencies(object state)
