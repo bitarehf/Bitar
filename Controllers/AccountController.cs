@@ -73,23 +73,23 @@ namespace Bitar.Controllers
             return BadRequest();
         }
 
-        [HttpPost]
-        public async Task<ActionResult> Register([FromBody] RegisterDto model)
-        {
-            var user = new ApplicationUser
-            {
-                UserName = model.Email,
-                Email = model.Email
-            };
-            var result = await _userManager.CreateAsync(user, model.Password);
+        // [HttpPost]
+        // public async Task<ActionResult> Register([FromBody] RegisterDto model)
+        // {
+        //     var user = new ApplicationUser
+        //     {
+        //         UserName = model.Email,
+        //         Email = model.Email
+        //     };
+        //     var result = await _userManager.CreateAsync(user, model.Password);
 
-            if (result.Succeeded)
-            {
-                return Ok("Account created");
-            }
+        //     if (result.Succeeded)
+        //     {
+        //         return Ok("Account created");
+        //     }
 
-            return NotFound();
-        }
+        //     return NotFound();
+        // }
 
         [Authorize]
         [HttpGet]
