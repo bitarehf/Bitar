@@ -84,7 +84,7 @@ namespace Bitar.Services
 
             decimal btcisk = eurisk * btceur;
 
-            stocks.Add(new Stock() { Symbol = Symbol.BTC, Price = btcisk });
+            stocks.Add(new Stock() { Symbol = Symbol.BTC, Price = btcisk * 0.995m + 50m });
             Stocks = stocks;
             OpenMarket();
 
