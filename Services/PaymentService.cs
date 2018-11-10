@@ -96,9 +96,15 @@ namespace Bitar.Services
                 _logger.LogCritical("Checking transactions");
                 foreach (var transactionA in _landsbankinn.transactions)
                 {
-                    if (transactionA.Amount < 500)
+                    if (transactionA.Amount < 1000)
                     {
-                        _logger.LogCritical("Transaction less than 500 ISK");
+                        _logger.LogCritical("Transaction less than 1000 ISK");
+                        continue;
+                    }
+
+                    if (transactionA.Amount > 20000)
+                    {
+                        _logger.LogCritical("Transaction is more than 20000 ISK");
                         continue;
                     }
 
