@@ -93,7 +93,7 @@ namespace Bitar.Services
             using (var scope = _scopeFactory.CreateScope())
             {
                 var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-                _logger.LogCritical("Checking transactions");
+                _logger.LogInformation("Checking transactions");
                 foreach (var transactionA in _landsbankinn.transactions)
                 {
                     if (transactionA.Amount < 1000)

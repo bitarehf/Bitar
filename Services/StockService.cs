@@ -63,7 +63,7 @@ namespace Bitar.Services
             {
                 if (stock.Price == decimal.Zero)
                 {
-                    _logger.LogCritical($"Failed to update {stock.Symbol}");
+                    _logger.LogCritical($"Failed to update {stock.Symbol} : {stock.Price}.");
                     CloseMarket();
                     return;
                 }
@@ -77,7 +77,7 @@ namespace Bitar.Services
             decimal btceur = await _kraken.FetchBTCEUR();
             if (btceur == decimal.Zero)
             {
-                _logger.LogCritical("Failed to update btceur.");
+                _logger.LogCritical($"Failed to update btceur {btceur}.");
                 CloseMarket();
                 return;
             }
