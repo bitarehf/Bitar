@@ -56,7 +56,7 @@ namespace Bitar.Controllers
                 user = await _userManager.FindByNameAsync(login.User);
                 if (user == null)
                 {
-                    return BadRequest();
+                    return Unauthorized();
                 }
             }
 
