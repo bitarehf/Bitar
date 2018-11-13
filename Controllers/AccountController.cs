@@ -50,11 +50,16 @@ namespace Bitar.Controllers
                 return BadRequest();
             }
 
-            var user = await _userManager.FindByNameAsync(login.Email);
+            var user = await _userManager.FindByIdAsync(login.User);
             if (user == null)
             {
-                return BadRequest();
+                user = await _userManager.FindByNameAsync(login.User);
+                if (user == null)
+                {
+                    return BadRequest();
+                }
             }
+
             // Check the password but don't "sign in" (which would set a cookie).
             var result = await _signInManager.CheckPasswordSignInAsync(user, login.Password, false);
             if (result.Succeeded)
@@ -70,7 +75,7 @@ namespace Bitar.Controllers
                         SecurityAlgorithms.HmacSha256
                     ));
 
-                _logger.LogCritical(login.Email + " logged in");
+                _logger.LogCritical(login.User + " logged in");
 
                 return Ok(new JwtSecurityTokenHandler().WriteToken(token));
             }
@@ -78,23 +83,23 @@ namespace Bitar.Controllers
             return Unauthorized();
         }
 
-        // [HttpPost]
-        // public async Task<ActionResult> Register([FromBody] RegisterDto model)
-        // {
-        //     var user = new ApplicationUser
-        //     {
-        //         UserName = model.Email,
-        //         Email = model.Email
-        //     };
-        //     var result = await _userManager.CreateAsync(user, model.Password);
+        [HttpPost]
+        public async Task<ActionResult> Register([FromBody] RegisterDto register)
+        {
+            var user = new ApplicationUser
+            {
+                Id = register.SSN,
+                Email = register.Email
+            };
+            var result = await _userManager.CreateAsync(user, register.Password);
 
-        //     if (result.Succeeded)
-        //     {
-        //         return Ok("Account created");
-        //     }
+            if (result.Succeeded)
+            {
+                return Ok("Account created");
+            }
 
-        //     return NotFound();
-        // }
+            return NotFound();
+        }
 
         [Authorize]
         [HttpGet]
@@ -130,7 +135,7 @@ namespace Bitar.Controllers
         public class LoginDto
         {
             [Required]
-            public string Email { get; set; }
+            public string User { get; set; }
 
             [Required]
             public string Password { get; set; }
@@ -139,6 +144,9 @@ namespace Bitar.Controllers
 
         public class RegisterDto
         {
+            [Required]
+            public string SSN { get; set; }
+
             [Required]
             public string Email { get; set; }
 
