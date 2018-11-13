@@ -45,6 +45,11 @@ namespace Bitar.Controllers
         [HttpPost]
         public async Task<ActionResult> Login([FromBody] LoginDto login)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest();
+            }
+
             var user = await _userManager.FindByNameAsync(login.Email);
             if (user == null)
             {
@@ -70,7 +75,7 @@ namespace Bitar.Controllers
                 return Ok(new JwtSecurityTokenHandler().WriteToken(token));
             }
 
-            return BadRequest();
+            return Unauthorized();
         }
 
         // [HttpPost]
