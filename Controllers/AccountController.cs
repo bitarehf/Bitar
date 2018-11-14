@@ -18,7 +18,7 @@ using Microsoft.IdentityModel.Tokens;
 
 namespace Bitar.Controllers
 {
-    [Route("[controller]")]
+    [Route("[controller]/[action]")]
     public class AccountController : ControllerBase
     {
         private readonly ILogger<AccountController> _logger;
