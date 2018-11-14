@@ -89,6 +89,7 @@ namespace Bitar.Controllers
             var user = new ApplicationUser
             {
                 Id = register.SSN,
+                UserName = register.SSN,
                 Email = register.Email
             };
             var result = await _userManager.CreateAsync(user, register.Password);
