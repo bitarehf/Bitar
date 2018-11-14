@@ -108,7 +108,7 @@ namespace Bitar
             app.UseAuthentication();
 
             app.UseCors(builder => builder
-                .AllowAnyOrigin()
+                .WithOrigins("https://bitar.is", "https://www.bitar.is", "http://localhost:4200")
                 .AllowAnyHeader()
                 .AllowAnyMethod()
                 .AllowCredentials());
