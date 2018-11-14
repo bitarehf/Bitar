@@ -43,7 +43,7 @@ namespace Bitar.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult> Login([FromBody] LoginDto login)
+        public async Task<ActionResult> Login(LoginDto login)
         {
             if (!ModelState.IsValid)
             {
@@ -84,7 +84,7 @@ namespace Bitar.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult> Register([FromBody] RegisterDto register)
+        public async Task<ActionResult> Register(RegisterDto register)
         {
             var user = new ApplicationUser
             {
