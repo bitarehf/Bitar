@@ -91,10 +91,7 @@ namespace Bitar
             services.AddSingleton<KrakenService>();
             services.AddSingleton<StockService>();
             services.AddHostedService<PaymentService>();
-
-            services.AddCors(options => options.AddPolicy("AllowAny", b =>
-                b.AllowAnyHeader().AllowAnyMethod().AllowCredentials().AllowAnyOrigin()));
-
+            
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
 
             services.AddSignalR();
@@ -111,7 +108,11 @@ namespace Bitar
 
             app.UseAuthentication();
 
-            app.UseCors("AllowAny");
+            app.UseCors(builder => builder
+                .WithOrigins("https://bitar.is", "https://www.bitar.is", "http://localhost:4200")
+                .AllowAnyHeader()
+                .AllowAnyMethod()
+                .AllowCredentials());
 
             app.UseForwardedHeaders();
 
