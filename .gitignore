@@ -269,3 +269,6 @@ response.xml
 
 # ASP.NET Core production appsettings
 appsettings.production.json
+
+# Migrations
+Migrations/
