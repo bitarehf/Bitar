@@ -109,8 +109,8 @@ namespace Bitar.Services
                     }
 
                     _logger.LogCritical("Searching for person with SSN: " + transactionA.SSN);
-                    Person person = await context.Persons.FindAsync(transactionA.SSN);
-                    if (person == null)
+                    AccountData accountData = await context.AccountData.FindAsync(transactionA.SSN);
+                    if (accountData == null)
                     {
                         _logger.LogCritical($"{transactionA.SSN} not found");
                         continue;
@@ -123,7 +123,7 @@ namespace Bitar.Services
                     }
 
                     _logger.LogCritical($"Transaction {transactionA.Id} has not been paid");
-                    string address = person.BitcoinAddress;
+                    var address = accountData.DepositAddress;
 
                     // Convert ISK transaction amount  to Money.
                     Money amount = new Money((1 / BTCISK * transactionA.Amount) * 0.995m, MoneyUnit.BTC);
@@ -136,7 +136,7 @@ namespace Bitar.Services
 
                     // Try to send bitcoin.
                     _logger.LogCritical($"Attempting to pay {amount.Satoshi} satoshis to {address}");
-                    uint256 txId = await _bitcoin.MakePayment(address, amount);
+                    uint256 txId = await _bitcoin.MakePayment(address.ToString(), amount);
                     if (txId != null)
                     {
                         transactionA.TxId = txId.ToString();

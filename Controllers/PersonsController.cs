@@ -1,6 +1,7 @@
 ﻿using Bitar.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using NBitcoin;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -20,38 +21,31 @@ namespace Bitar.Controllers
 
         // GET: api/Persons
         [HttpGet]
-        public List<Person> GetPersons()
+        public List<AccountData> GetPersons()
         {
-            return _context.Persons.ToList();
+            return _context.AccountData.ToList();
         }
 
         // GET: api/Persons/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<Person>> GetPerson(string id)
+        public async Task<ActionResult<AccountData>> GetPerson(string id)
         {
-            return await _context.Persons.FindAsync(id);
+            return await _context.AccountData.FindAsync(id);
         }
 
         // POST: api/Persons
         /// <summary>
-        /// Creates person if person doesn't exist
-        /// otherwise just updates person BitcoinAddress
+        /// Updates Persons WithdrawalAddress
         /// </summary>
         [HttpPost]
-        public async Task<ActionResult<Person>> CreateAsync(Person person)
+        public async Task<ActionResult<BitcoinAddress>> UpdateWithdrawalAddress(string id, BitcoinAddress bitcoinAddress)
         {
-            if (await _context.Persons.AnyAsync(c => c.SSN == person.SSN) == false) 
-            {
-                _context.Persons.Add(person);
-            }
-            else
-            {
-                _context.Persons.Update(person);
-            }
+            var person = await _context.AccountData.FindAsync(id);
+            person.WithdrawalAddress = bitcoinAddress.ToString();
 
             await _context.SaveChangesAsync();
 
-            return person;
+            return BitcoinAddress.Create(person.WithdrawalAddress, Network.Main);
         }
     }
 }

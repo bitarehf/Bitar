@@ -9,7 +9,7 @@
     <PackageReference Include="KrakenCore" Version="1.0.0-alpha07" />
     <PackageReference Include="Microsoft.AspNetCore.App" />
     <PackageReference Include="Microsoft.AspNetCore.Razor.Design" Version="2.1.2" PrivateAssets="All" />
-    <PackageReference Include="NBitcoin" Version="4.1.1.51" />
+    <PackageReference Include="NBitcoin" Version="4.1.1.81" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="2.1.2" />
   </ItemGroup>
 
