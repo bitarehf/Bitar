@@ -123,7 +123,7 @@ namespace Bitar.Services
                     }
 
                     _logger.LogCritical($"Transaction {transactionA.Id} has not been paid");
-                    var address = accountData.DepositAddress;
+                    var address = _bitcoin.GetDepositAddress(transactionA.SSN);
 
                     // Convert ISK transaction amount  to Money.
                     Money amount = new Money((1 / BTCISK * transactionA.Amount) * 0.995m, MoneyUnit.BTC);

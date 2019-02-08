@@ -18,6 +18,7 @@ namespace Bitar.Services
         private readonly ILogger<BitcoinService> _logger;
         private readonly BitcoinSettings _options;
         private readonly IServiceScopeFactory _scopeFactory;
+        private readonly ExtKey _masterKey;
         public readonly RPCClient _client;
 
         public BitcoinService(
@@ -28,6 +29,7 @@ namespace Bitar.Services
             _logger = logger;
             _options = options.Value;
             _scopeFactory = scopeFactory;
+            _masterKey = new BitcoinExtKey(_options.MasterKey, Network.Main);
 
             var credentials = new NetworkCredential()
             {
@@ -61,9 +63,38 @@ namespace Bitar.Services
         /// <summary>
         /// Imports address to the bitcoin node without a rescan.
         /// </summary>
-        public async Task ImportAddress(BitcoinAddress bitcoinAddress)
+        public async Task ImportAddress(BitcoinWitPubKeyAddress bitcoinAddress, string id)
         {
-            await _client.ImportAddressAsync(bitcoinAddress, "", false);
+            await _client.ImportAddressAsync(bitcoinAddress, id, false);
+        }
+
+        public async Task<AccountData> GetAccountData(string id)
+        {
+            try
+            {
+                using (var scope = _scopeFactory.CreateScope())
+                {
+                    var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+                    return await context.AccountData.FindAsync(id);
+                }
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e.ToString());
+            }
+
+            return null;
+        }
+
+        public async Task<BitcoinWitPubKeyAddress> GetDepositAddress(string id)
+        {
+            var accountData = await GetAccountData(id);
+
+            // BIP84 - Derivation scheme for P2WPKH based accounts.
+            // m / 84' / coin_type' / account' / change / address
+            ExtKey key = _masterKey.Derive(new KeyPath("m/84'/0'/0'/0/" + accountData.Derivation));
+            return key.PrivateKey.PubKey.GetSegwitAddress(Network.Main);
         }
 
 
@@ -79,26 +110,23 @@ namespace Bitar.Services
         {
             try
             {
-                using (var scope = _scopeFactory.CreateScope())
-                {
-                    var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+                var accountData = await GetAccountData(id);
+                
+                ExtKey key = _masterKey.Derive(new KeyPath("m/84'/0'/0'/0/" + accountData.Derivation));
+                var senderAddress = key.PrivateKey.PubKey.GetSegwitAddress(Network.Main);
+                var unspentCoins = await _client.ListUnspentAsync(6, 99999999, senderAddress);
+                var estimateFeeRate = await _client.EstimateSmartFeeAsync(8);
 
-                    var accountData = await context.AccountData.FindAsync(id);
-                    var bitcoinSecret = new BitcoinSecret(accountData.BitcoinSecret, Network.Main);
-                    var senderAddress = BitcoinAddress.Create(accountData.DepositAddress, Network.Main);
-                    var unspentCoins = await _client.ListUnspentAsync(6, 99999999, senderAddress);
-                    var estimateFeeRate = await _client.EstimateSmartFeeAsync(8);
+                var tx = Network.Main.CreateTransactionBuilder()
+                    .AddCoins(unspentCoins.Select(c => c.AsCoin()))
+                    .AddKeys(key)
+                    .Send(receiverAddress, amount)
+                    .SendEstimatedFees(estimateFeeRate.FeeRate)
+                    .SetChange(senderAddress)
+                    .BuildTransaction(true);
 
-                    var tx = Network.Main.CreateTransactionBuilder()
-                        .AddCoins(unspentCoins.Select(c => c.AsCoin()))
-                        .AddKeys(bitcoinSecret)
-                        .Send(receiverAddress, amount)
-                        .SendEstimatedFees(estimateFeeRate.FeeRate)
-                        .SetChange(senderAddress)
-                        .BuildTransaction(true);
+                return await _client.SendRawTransactionAsync(tx);
 
-                    return await _client.SendRawTransactionAsync(tx);
-                }
             }
             catch (Exception e)
             {
@@ -106,6 +134,19 @@ namespace Bitar.Services
             }
 
             return null;
+        }
+
+        public async Task<Money> GetAddressBalance(BitcoinAddress address)
+        {
+            Money total = new Money(Decimal.Zero, MoneyUnit.BTC);
+
+            var utxos = await _client.ListUnspentAsync(1, 99999999, address);
+            foreach (var utxo in utxos)
+            {
+                total += utxo.Amount;
+            }
+            
+            return total;
         }
     }
 }

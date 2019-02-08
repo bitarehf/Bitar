@@ -1,4 +1,5 @@
 ﻿using Bitar.Models;
+using Bitar.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using NBitcoin;
@@ -8,14 +9,16 @@ using System.Threading.Tasks;
 
 namespace Bitar.Controllers
 {
-    [Route("[controller]")]
+    [Route("[controller]/[action]")]
     [ApiController]
-    public class AccountDataDetailsController : ControllerBase
+    public class AccountDataController : ControllerBase
     {
+        private readonly BitcoinService _bitcoin;
         private readonly ApplicationDbContext _context;
 
-        public AccountDataDetailsController(ApplicationDbContext context)
+        public AccountDataController(ApplicationDbContext context, BitcoinService bitcoin)
         {
+            _bitcoin = bitcoin;
             _context = context;
         }
 
@@ -46,6 +49,19 @@ namespace Bitar.Controllers
             await _context.SaveChangesAsync();
 
             return BitcoinAddress.Create(accountData.WithdrawalAddress, Network.Main);
+        }
+
+        [HttpGet("{id}")]
+        public async Task<ActionResult<string>> GetDepositAddress(string id)
+        {
+            var result = await _bitcoin.GetDepositAddress(id);
+            return result.ToString();
+        }
+
+        [HttpGet]
+        public async Task<ActionResult<Money>> GetAddressBalance(string address)
+        {
+            return await _bitcoin.GetAddressBalance(BitcoinAddress.Create(address, Network.Main));
         }
     }
 }

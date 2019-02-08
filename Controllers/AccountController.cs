@@ -70,7 +70,7 @@ namespace Bitar.Controllers
                 }
             }
 
-            // Ensure account details have been created incase they
+            // Ensure account data has been created incase they
             // failed to be created when the account was registered.
             await CreateAccountData(user.Id);
 
@@ -137,22 +137,16 @@ namespace Bitar.Controllers
                 // Don't try to create account data if it already exists.
                 if (await _userManager.FindByIdAsync(id) == null) return;
 
-                // Generate a random private key
-                var privateKey = new Key();
-                // Convert the private key to WIF.
-                var bitcoinSecret = privateKey.GetWif(Network.Main);
-                // This is the deposit address.
-                var bech32 = bitcoinSecret.GetSegwitAddress();
+                // Get account address according to 
+                var address = await _bitcoinService.GetDepositAddress(id);
+
+                // Import Address to bitcoin node to keep track of it.
+                await _bitcoinService.ImportAddress(address, id);
 
                 var accountData = new AccountData
                 {
-                    Id = id,
-                    DepositAddress = bech32.ToString(),
-                    BitcoinSecret = bitcoinSecret.ToWif()
+                    Id = id
                 };
-
-                // Import Address to bitcoin node in order to track transactions.
-                await _bitcoinService.ImportAddress(bech32);
 
                 // Add the keys we just created to account data.
                 await _context.AccountData.AddAsync(accountData);
@@ -162,7 +156,7 @@ namespace Bitar.Controllers
             catch (WebException)
             {
                 _logger.LogCritical("Failed to import address to bitcoin node.");
-                _logger.LogCritical("AccountDetails not created for account.");
+                _logger.LogCritical($"AccountData not created for account ({id}).");
                 _logger.LogCritical("Is the bitcoin node down?");
             }
             catch (Exception e)

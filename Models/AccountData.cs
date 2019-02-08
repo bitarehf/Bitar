@@ -12,9 +12,7 @@ namespace Bitar.Models
         [Required]
         public string Id { get; set; }
         public string WithdrawalAddress { get; set; }
-        [Required]
-        public string DepositAddress { get; set; }
-        [Required]
-        public string BitcoinSecret { get; set; }
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        public int Derivation { get; set; }
     }
 }
