@@ -101,28 +101,28 @@ namespace Bitar.Controllers
         public async Task<ActionResult> Register(RegisterDTO register)
         {
             // Don't try to create a user that already exists.
-            if (await _context.Users.FindAsync(register.SSN) != null)
+            if (await _context.Users.FindAsync(register.Id) != null)
             {
-                _logger.LogWarning($"Account already exists. Account id: {register.SSN}");
+                _logger.LogWarning($"Account already exists. Account id: {register.Id}");
                 return Conflict("Account already exists");
             }
 
             var user = new ApplicationUser
             {
-                Id = register.SSN,
-                UserName = register.SSN,
+                Id = register.Id,
+                UserName = register.Id,
                 Email = register.Email
             };
 
+            _logger.LogInformation("Id:" + register.Id);
             _logger.LogInformation("Email:" + register.Email);
             _logger.LogInformation("Password:" + register.Password);
-            _logger.LogInformation("SSN:" + register.SSN);
 
             var result = await _userManager.CreateAsync(user, register.Password);
 
             if (result.Succeeded)
             {
-                await CreateAccountData(register.SSN);
+                await CreateAccountData(register.Id);
 
                 return Ok("Account created");
             }
@@ -205,7 +205,7 @@ namespace Bitar.Controllers
         public class RegisterDTO
         {
             [Required]
-            public string SSN { get; set; }
+            public string Id { get; set; }
 
             [Required]
             public string Email { get; set; }
