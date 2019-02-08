@@ -124,7 +124,12 @@ namespace Bitar.Controllers
             {
                 await CreateAccountData(register.Id);
 
-                return Ok("Account created");
+                var login = new LoginDTO(){
+                    User = register.Id,
+                    Password = register.Password
+                };
+                
+                return await Login(login);
             }
 
             return NotFound();
