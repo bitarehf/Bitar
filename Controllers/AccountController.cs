@@ -137,26 +137,22 @@ namespace Bitar.Controllers
                 // Don't try to create account data if it already exists.
                 if (await _userManager.FindByIdAsync(id) == null) return;
 
-                // Get account address according to 
-                var address = await _bitcoinService.GetDepositAddress(id);
-
-                // Import Address to bitcoin node to keep track of it.
-                await _bitcoinService.ImportAddress(address, id);
-
                 var accountData = new AccountData
                 {
                     Id = id
+                    // Derivation is automatically assigned an id.
                 };
-
-                // Add the keys we just created to account data.
                 await _context.AccountData.AddAsync(accountData);
                 await _context.SaveChangesAsync();
+
+                var address = await _bitcoinService.GetDepositAddress(id);
+                // Import Address to bitcoin node to keep track of it.
+                await _bitcoinService.ImportAddress(address, id);
 
             }
             catch (WebException)
             {
                 _logger.LogCritical("Failed to import address to bitcoin node.");
-                _logger.LogCritical($"AccountData not created for account ({id}).");
                 _logger.LogCritical("Is the bitcoin node down?");
             }
             catch (Exception e)
