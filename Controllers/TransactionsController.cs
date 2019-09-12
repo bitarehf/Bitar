@@ -27,13 +27,15 @@ namespace Bitar.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<Transaction>> GetTransaction(string id)
         {
-            return await _context.Transactions.FindAsync(id);
+            return null;
+            //return await _context.Transactions.FindAsync(id);
         }
 
         [HttpPost]
         public ActionResult<Transaction> Post(Transaction transaction)
         {
-            _landsbankinn.transactions.Add(transaction);
+            // Only use this in the test environment.
+            //_landsbankinn.transactions.Add(transaction);
 
             return transaction;
         }

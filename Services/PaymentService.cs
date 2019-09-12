@@ -1,15 +1,16 @@
-using Bitar.Models;
-using KrakenCore;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
-using NBitcoin;
 using System;
 using System.Collections.Generic;
 using System.Net.WebSockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Bitar.Models;
+using KrakenCore;
+using Landsbankinn;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using NBitcoin;
 
 namespace Bitar.Services
 {
@@ -54,8 +55,7 @@ namespace Bitar.Services
 
             await _stock.StartAsync(cancellationToken);
 
-            // Wait 15 seconds to allow StockService to get updates.
-            _timer = new Timer(CheckPayments, null, TimeSpan.FromSeconds(15), TimeSpan.FromMinutes(1));
+            _timer = new Timer(CheckPayments, null, TimeSpan.Zero, TimeSpan.FromMinutes(1));
 
             await Task.CompletedTask;
         }
@@ -71,87 +71,175 @@ namespace Bitar.Services
 
         private async void CheckPayments(object state)
         {
-            List<Stock> stocks = _stock.Stocks;
-            decimal BTCISK = decimal.Zero;
-
-            if (_stock.MarketState == MarketState.Open)
-            {
-                foreach (var stock in stocks)
-                {
-                    if (stock.Symbol == Symbol.BTC)
-                    {
-                        BTCISK = stock.Price;
-                    }
-                }
-            }
-            else
-            {
-                _logger.LogCritical("Not checking transactions because market is closed.");
-                return;
-            }
-
-            using (var scope = _scopeFactory.CreateScope())
+            using(var scope = _scopeFactory.CreateScope())
             {
                 var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-                _logger.LogInformation("Checking transactions");
-                foreach (var transactionA in _landsbankinn.transactions)
+
+                _logger.LogInformation("Checking transactions.");
+
+                var transactions = await FetchTransactions();
+
+                if (transactions == null)
                 {
-                    if (transactionA.Amount < 1000)
-                    {
-                        _logger.LogCritical("Transaction less than 1000 ISK");
-                        continue;
-                    }
+                    _logger.LogCritical("No transactions received today.");
+                    return;
+                }
 
-                    if (transactionA.Amount > 20000)
-                    {
-                        _logger.LogCritical("Transaction is more than 20000 ISK");
-                        continue;
-                    }
+                foreach (var transaction in transactions)
+                {
+                    _logger.LogDebug($"Date: {transaction.Date}");
+                    _logger.LogDebug($"PersonalId: {transaction.PersonalId}");
+                    _logger.LogDebug($"skyring_tilvisunar: {transaction.Reference}");
+                    _logger.LogDebug($"tekka_sedilnr: {transaction.ShortReference}");
+                    _logger.LogDebug($"tilvisun: {transaction.PaymentDetail}");
+                    _logger.LogDebug($"upphaed: {transaction.Amount}");
+                    _logger.LogDebug("===========================");
 
-                    _logger.LogCritical("Searching for person with SSN: " + transactionA.SSN);
-                    AccountData accountData = await context.AccountData.FindAsync(transactionA.SSN);
+                    AccountData accountData = await context.AccountData.FindAsync(transaction.PersonalId);
                     if (accountData == null)
                     {
-                        _logger.LogCritical($"{transactionA.SSN} not found");
+                        _logger.LogCritical($"Found a transaction from an unregistered user {transaction.PersonalId}");
                         continue;
                     }
 
-                    if (await context.Transactions.FindAsync(transactionA.Id) != null)
+                    if (!accountData.Transactions.Contains(transaction))
                     {
-                        _logger.LogCritical($"Transaction: {transactionA.Id} has already been paid");
-                        continue;
+                        accountData.Transactions.Add(transaction);
+                        await context.SaveChangesAsync();
                     }
 
-                    _logger.LogCritical($"Transaction {transactionA.Id} has not been paid");
-                    var address = _bitcoin.GetDepositAddress(transactionA.SSN);
-
-                    // Convert ISK transaction amount  to Money.
-                    Money amount = new Money((1 / BTCISK * transactionA.Amount) * 0.995m, MoneyUnit.BTC);
-
-                    if (amount == null)
-                    {
-                        _logger.LogWarning("Failed to convert ISK to BTC");
-                        break;
-                    }
-
-                    // Try to send bitcoin.
-                    _logger.LogCritical($"Attempting to pay {amount.Satoshi} satoshis to {address}");
-                    uint256 txId = await _bitcoin.MakePayment(address.ToString(), amount);
-                    if (txId != null)
-                    {
-                        transactionA.TxId = txId.ToString();
-                        _logger.LogCritical($"({transactionA.SSN}) {address} paid {amount.Satoshi} satoshis. TxId: {transactionA.TxId}");
-                    }
-                    else
-                    {
-                        _logger.LogCritical($"Failed to pay ({transactionA.SSN}) {transactionA.Id} {address} {amount.Satoshi} satoshis.");
-                    }
-
-                    context.Transactions.Add(transactionA);
-                    await context.SaveChangesAsync();
                 }
+
+                // foreach (var transactionA in _landsbankinn.transactions)
+                // {
+
+                //     if (transactionA.Amount > 20000)
+                //     {
+                //         _logger.LogCritical("Transaction is more than 20000 ISK");
+                //         continue;
+                //     }
+
+                //     _logger.LogCritical("Searching for person with SSN: " + transactionA.SSN);
+                //     AccountData accountData = await context.AccountData.FindAsync(transactionA.SSN);
+                //     if (accountData == null)
+                //     {
+                //         _logger.LogCritical($"{transactionA.SSN} not found");
+                //         continue;
+                //     }
+
+                //     context.Transactions.Add(transactionA);
+                //     await context.SaveChangesAsync();
+                // }
             }
         }
+
+        private async Task<List<Bitar.Models.Transaction>> FetchTransactions()
+        {
+            List<LI_Fyrirspurn_reikningsyfirlit_svarFaersla> tx = await _landsbankinn.FetchTransactions();
+            List<Bitar.Models.Transaction> transactions = new List<Bitar.Models.Transaction>();
+
+            // Converts to the transaction to the transaction model we are using.
+            foreach (var transaction in tx)
+            {
+                if (transaction.faerslulykill != "01")continue; // Do not remove this line.
+
+                transactions.Add(new Bitar.Models.Transaction
+                {
+                    Date = transaction.bokunardags,
+                        PersonalId = transaction.kt_greidanda,
+                        Reference = transaction.tekka_sedilnr,
+                        ShortReference = transaction.tilvisun,
+                        PaymentDetail = transaction.skyring_tilvisunar,
+                        Amount = transaction.upphaed
+                });
+            }
+
+            return transactions;
+        }
+
+        // private async void CheckPaymentsOld(object state)
+        // {
+        //     List<Stock> stocks = _stock.Stocks;
+        //     decimal BTCISK = decimal.Zero;
+
+        //     if (_stock.MarketState == MarketState.Open)
+        //     {
+        //         foreach (var stock in stocks)
+        //         {
+        //             if (stock.Symbol == Symbol.BTC)
+        //             {
+        //                 BTCISK = stock.Price;
+        //             }
+        //         }
+        //     }
+        //     else
+        //     {
+        //         _logger.LogCritical("Not checking transactions because market is closed.");
+        //         return;
+        //     }
+
+        //     using(var scope = _scopeFactory.CreateScope())
+        //     {
+        //         var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        //         _logger.LogInformation("Checking transactions");
+        //         foreach (var transactionA in _landsbankinn.transactions)
+        //         {
+        //             if (transactionA.Amount < 1000)
+        //             {
+        //                 _logger.LogCritical("Transaction less than 1000 ISK");
+        //                 continue;
+        //             }
+
+        //             if (transactionA.Amount > 20000)
+        //             {
+        //                 _logger.LogCritical("Transaction is more than 20000 ISK");
+        //                 continue;
+        //             }
+
+        //             _logger.LogCritical("Searching for person with SSN: " + transactionA.SSN);
+        //             AccountData accountData = await context.AccountData.FindAsync(transactionA.SSN);
+        //             if (accountData == null)
+        //             {
+        //                 _logger.LogCritical($"{transactionA.SSN} not found");
+        //                 continue;
+        //             }
+
+        //             if (await context.Transactions.FindAsync(transactionA.Id) != null)
+        //             {
+        //                 _logger.LogCritical($"Transaction: {transactionA.Id} has already been paid");
+        //                 continue;
+        //             }
+
+        //             _logger.LogCritical($"Transaction {transactionA.Id} has not been paid");
+        //             var address = _bitcoin.GetDepositAddress(transactionA.SSN);
+
+        //             // Convert ISK transaction amount  to Money.
+        //             Money amount = new Money((1 / BTCISK * transactionA.Amount) * 0.995m, MoneyUnit.BTC);
+
+        //             if (amount == null)
+        //             {
+        //                 _logger.LogWarning("Failed to convert ISK to BTC");
+        //                 break;
+        //             }
+
+        //             // Try to send bitcoin.
+        //             _logger.LogCritical($"Attempting to pay {amount.Satoshi} satoshis to {address}");
+        //             uint256 txId = await _bitcoin.MakePayment(address.ToString(), amount);
+        //             if (txId != null)
+        //             {
+        //                 transactionA.TxId = txId.ToString();
+        //                 _logger.LogCritical($"({transactionA.SSN}) {address} paid {amount.Satoshi} satoshis. TxId: {transactionA.TxId}");
+        //             }
+        //             else
+        //             {
+        //                 _logger.LogCritical($"Failed to pay ({transactionA.SSN}) {transactionA.Id} {address} {amount.Satoshi} satoshis.");
+        //             }
+
+        //             context.Transactions.Add(transactionA);
+        //             await context.SaveChangesAsync();
+        //         }
+        //     }
+        // }
 
         // private void CheckPayments(object state)
         // {

@@ -1,11 +1,7 @@
-using Bitar.Models;
-using Bitar.Models.Settings;
-using Landsbankinn;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Reflection;
 using System.Security.Cryptography.X509Certificates;
@@ -14,6 +10,11 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.Serialization;
+using Bitar.Models;
+using Bitar.Models.Settings;
+using Landsbankinn;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace Bitar.Services
 {
@@ -32,7 +33,7 @@ namespace Bitar.Services
             _logger = logger;
             _options = options.Value;
             _certificate = new X509Certificate2(Convert.FromBase64String(_options.Certificate), _options.CertificatePassword);
-            
+
             Login(_options.Username, _options.Password);
         }
 
@@ -52,6 +53,39 @@ namespace Bitar.Services
 
             LI_Innskra_svar oResponse = (LI_Innskra_svar)SendAndReceive(login, Type.GetType("Landsbankinn.LI_Innskra_svar"));
             sessionId = oResponse.seta;
+        }
+
+        public async Task<List<LI_Fyrirspurn_reikningsyfirlit_svarFaersla>> FetchTransactions()
+        {
+            var request = new LI_Fyrirspurn_reikningsyfirlit()
+            {
+                dags_fra = DateTime.Today,
+                dags_til = DateTime.Today,
+                reikningur = new LI_reikningur_type() { utibu = "0133", hb = "26", reikningsnr = "014528" },
+                seta = "",
+                version = 1.1m,
+            };
+
+            try
+            {
+                LI_Fyrirspurn_reikningsyfirlit_svar response = (LI_Fyrirspurn_reikningsyfirlit_svar)SendAndReceive(request, Type.GetType("Landsbankinn.LI_Fyrirspurn_reikningsyfirlit_svar"));
+                if (response != null)
+                {
+                    _logger.LogInformation($"Reikningsstaða: {response.stada_reiknings}");
+                    if (response.faerslur != null)
+                    {
+                        _logger.LogCritical($"Magn: {response.faerslur.Count()}");
+                        return response.faerslur.ToList();
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e.ToString());
+                Login(_options.Username, _options.Password);
+            }
+
+            return null; // No transactions received.
         }
 
         public async Task<List<Stock>> FetchCurrencyUpdates()
@@ -75,17 +109,19 @@ namespace Bitar.Services
                     {
                         if (item.iso_takn == LI_ISO_takn_gjaldmidils_type.EUR)
                         {
-                            stocks.Add(new Stock(){
+                            stocks.Add(new Stock()
+                            {
                                 Symbol = Symbol.EUR,
-                                Price = item.solugengi
+                                    Price = item.solugengi
                             });
                         }
 
                         if (item.iso_takn == LI_ISO_takn_gjaldmidils_type.USD)
                         {
-                            stocks.Add(new Stock(){
+                            stocks.Add(new Stock()
+                            {
                                 Symbol = Symbol.USD,
-                                Price = item.solugengi
+                                    Price = item.solugengi
                             });
                         }
                     }
@@ -96,7 +132,7 @@ namespace Bitar.Services
                 _logger.LogError(e.ToString());
                 Login(_options.Username, _options.Password);
             }
-            
+
             return stocks;
         }
 
@@ -149,7 +185,6 @@ namespace Bitar.Services
             }
             return false;
         }
-
 
         //public LI_Fyrirspurn_reikningsyfirlit_svar AccountStatement(string utibu, string hb, string reikingsnr)
         //{

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using NBitcoin;
@@ -14,5 +15,6 @@ namespace Bitar.Models
         public string WithdrawalAddress { get; set; }
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Derivation { get; set; }
+        public List<Transaction> Transactions { get; set; }
     }
 }
