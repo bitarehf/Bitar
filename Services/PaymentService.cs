@@ -138,7 +138,7 @@ namespace Bitar.Services
             List<LI_Fyrirspurn_reikningsyfirlit_svarFaersla> tx = await _landsbankinn.FetchTransactions();
             List<Bitar.Models.Transaction> transactions = new List<Bitar.Models.Transaction>();
 
-            if (transactions == null) return null;
+            if (tx == null) return null;
 
             // Converts to the transaction to the transaction model we are using.
             foreach (var transaction in tx)
