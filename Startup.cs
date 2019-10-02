@@ -3,6 +3,7 @@ using Bitar.Hubs;
 using Bitar.Models;
 using Bitar.Models.Settings;
 using Bitar.Services;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpOverrides;
@@ -10,9 +11,8 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.IdentityModel.Tokens;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.Hosting;
+using Microsoft.IdentityModel.Tokens;
 
 namespace Bitar
 {
@@ -29,8 +29,12 @@ namespace Bitar
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddDbContext<ApplicationDbContext>(options =>
-                options.UseNpgsql(
-                    Configuration.GetConnectionString("DefaultConnection")));
+                {
+                    options.EnableSensitiveDataLogging();
+                    options.UseNpgsql(
+                        Configuration.GetConnectionString("DefaultConnection"));
+                }
+            );
 
             services.AddDefaultIdentity<ApplicationUser>()
                 .AddEntityFrameworkStores<ApplicationDbContext>()
@@ -83,7 +87,7 @@ namespace Bitar
             services.AddSingleton<KrakenService>();
             services.AddSingleton<StockService>();
             services.AddHostedService<PaymentService>();
-            
+
             services.AddControllers();
 
             services.AddSignalR();

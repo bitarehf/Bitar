@@ -72,7 +72,7 @@ namespace Bitar.Controllers
 
             // Ensure account data has been created incase they
             // failed to be created when the account was registered.
-            await CreateAccountData(user.Id);
+            //await CreateAccountData(user.Id);
 
             // Check the password but don't "sign in" (which would set a cookie).
             var result = await _signInManager.CheckPasswordSignInAsync(user, login.Password, false);
