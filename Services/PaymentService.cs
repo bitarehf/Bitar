@@ -55,7 +55,7 @@ namespace Bitar.Services
 
             await _stock.StartAsync(cancellationToken);
 
-            _timer = new Timer(CheckPayments, null, TimeSpan.Zero, TimeSpan.FromMinutes(1));
+            _timer = new Timer(CheckPayments, null, TimeSpan.Zero, TimeSpan.FromMinutes(2));
 
             await Task.CompletedTask;
         }
