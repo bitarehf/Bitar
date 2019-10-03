@@ -13,8 +13,9 @@ namespace Bitar.Models
         [Required]
         public string Id { get; set; }
         public string WithdrawalAddress { get; set; }
+
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Derivation { get; set; }
-        public List<Transaction> Transactions { get; set; }
+        public virtual ICollection<Transaction> Transactions { get; set; }
     }
 }

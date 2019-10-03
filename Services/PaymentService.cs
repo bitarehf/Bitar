@@ -102,8 +102,15 @@ namespace Bitar.Services
                         continue;
                     }
 
-                    if (!accountData.Transactions.Contains(transaction))
+                    if (accountData.Transactions == null)
                     {
+                        _logger.LogInformation($"{transaction.PersonalId} just made his first transaction");
+                        accountData.Transactions.Add(transaction);
+                        await context.SaveChangesAsync();
+                    }
+                    else if (!accountData.Transactions.Contains(transaction))
+                    {
+                        _logger.LogInformation($"Found a new transaction from {transaction.PersonalId}");
                         accountData.Transactions.Add(transaction);
                         await context.SaveChangesAsync();
                     }
@@ -138,7 +145,7 @@ namespace Bitar.Services
             List<LI_Fyrirspurn_reikningsyfirlit_svarFaersla> tx = await _landsbankinn.FetchTransactions();
             List<Bitar.Models.Transaction> transactions = new List<Bitar.Models.Transaction>();
 
-            if (tx == null) return null;
+            if (tx == null)return null;
 
             // Converts to the transaction to the transaction model we are using.
             foreach (var transaction in tx)
