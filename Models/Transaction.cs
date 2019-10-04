@@ -20,6 +20,6 @@ namespace Bitar.Models
 
         [Required]
         public decimal Amount { get; set; }
-        public AccountData AccountData { get; set; }
+        public virtual AccountData AccountData { get; set; }
     }
 }

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net.WebSockets;
 using System.Text;
 using System.Threading;
@@ -7,6 +8,7 @@ using System.Threading.Tasks;
 using Bitar.Models;
 using KrakenCore;
 using Landsbankinn;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -95,7 +97,9 @@ namespace Bitar.Services
                     _logger.LogDebug($"upphaed: {transaction.Amount}");
                     _logger.LogDebug("===========================");
 
-                    AccountData accountData = await context.AccountData.FindAsync(transaction.PersonalId);
+                    AccountData accountData = await context.AccountData
+                        .Include(x => x.Transactions)
+                        .FirstOrDefaultAsync(x => x.Id == transaction.PersonalId);
                     if (accountData == null)
                     {
                         _logger.LogCritical($"Found a transaction from an unregistered user {transaction.PersonalId}");
@@ -104,17 +108,18 @@ namespace Bitar.Services
 
                     if (accountData.Transactions == null)
                     {
-                        _logger.LogInformation($"{transaction.PersonalId} just made his first transaction");
+                        _logger.LogCritical($"Found {transaction.PersonalId} first transaction");
                         accountData.Transactions.Add(transaction);
+                        accountData.Balance += transaction.Amount;
                         await context.SaveChangesAsync();
                     }
                     else if (!accountData.Transactions.Contains(transaction))
                     {
-                        _logger.LogInformation($"Found a new transaction from {transaction.PersonalId}");
+                        _logger.LogCritical($"Found a new transaction from {transaction.PersonalId}");
                         accountData.Transactions.Add(transaction);
+                        accountData.Balance += transaction.Amount;
                         await context.SaveChangesAsync();
                     }
-
                 }
 
                 // foreach (var transactionA in _landsbankinn.transactions)
