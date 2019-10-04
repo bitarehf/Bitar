@@ -113,7 +113,12 @@ namespace Bitar.Services
                         accountData.Balance += transaction.Amount;
                         await context.SaveChangesAsync();
                     }
-                    else if (!accountData.Transactions.Contains(transaction))
+                    else if (!accountData.Transactions.Any(x => x.PersonalId == transaction.PersonalId &&
+                            x.Date == transaction.Date &&
+                            x.Reference == transaction.Reference &&
+                            x.ShortReference == transaction.ShortReference &&
+                            x.PaymentDetail == transaction.PaymentDetail &&
+                            x.Amount == transaction.Amount))
                     {
                         _logger.LogCritical($"Found a new transaction from {transaction.PersonalId}");
                         accountData.Transactions.Add(transaction);
@@ -121,27 +126,6 @@ namespace Bitar.Services
                         await context.SaveChangesAsync();
                     }
                 }
-
-                // foreach (var transactionA in _landsbankinn.transactions)
-                // {
-
-                //     if (transactionA.Amount > 20000)
-                //     {
-                //         _logger.LogCritical("Transaction is more than 20000 ISK");
-                //         continue;
-                //     }
-
-                //     _logger.LogCritical("Searching for person with SSN: " + transactionA.SSN);
-                //     AccountData accountData = await context.AccountData.FindAsync(transactionA.SSN);
-                //     if (accountData == null)
-                //     {
-                //         _logger.LogCritical($"{transactionA.SSN} not found");
-                //         continue;
-                //     }
-
-                //     context.Transactions.Add(transactionA);
-                //     await context.SaveChangesAsync();
-                // }
             }
         }
 
