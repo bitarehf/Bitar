@@ -1,11 +1,15 @@
-﻿using Bitar.Models;
-using Bitar.Services;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using NBitcoin;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
+using Bitar.Models;
+using Bitar.Services;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using NBitcoin;
 
 namespace Bitar.Controllers
 {
@@ -13,20 +17,24 @@ namespace Bitar.Controllers
     [ApiController]
     public class AccountDataController : ControllerBase
     {
+        private readonly ILogger<AccountDataController> _logger;
         private readonly BitcoinService _bitcoin;
         private readonly ApplicationDbContext _context;
 
-        public AccountDataController(ApplicationDbContext context, BitcoinService bitcoin)
+        public AccountDataController(ILogger<AccountDataController> logger, ApplicationDbContext context, BitcoinService bitcoin)
         {
+            _logger = logger;
             _bitcoin = bitcoin;
             _context = context;
         }
 
         // GET: api/AccountData
+        [Authorize]
         [HttpGet]
-        public List<AccountData> AllAccountData()
+        public async Task<AccountData> AccountData()
         {
-            return _context.AccountData.ToList();
+            string id = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier).Value;
+            return await _context.AccountData.FindAsync(id);
         }
 
         // GET: api/AccountData/4708180420
