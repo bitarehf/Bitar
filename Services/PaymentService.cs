@@ -113,7 +113,8 @@ namespace Bitar.Services
                         accountData.Balance += transaction.Amount;
                         await context.SaveChangesAsync();
                     }
-                    else if (!accountData.Transactions.Any(x => x.PersonalId == transaction.PersonalId &&
+                    else if (!accountData.Transactions.Any(x =>
+                            x.PersonalId == transaction.PersonalId &&
                             x.Date == transaction.Date &&
                             x.Reference == transaction.Reference &&
                             x.ShortReference == transaction.ShortReference &&
