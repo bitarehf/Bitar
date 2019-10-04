@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using NBitcoin;
@@ -16,6 +17,12 @@ namespace Bitar.Models
 
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Derivation { get; set; }
-        public virtual ICollection<Transaction> Transactions { get; set; }
+
+        [DefaultValue(0)]
+        [Range(0, int.MaxValue)]
+        public decimal Balance { get; set; }
+        public virtual List<Transaction> Transactions { get; set; }
+        [Timestamp]
+        public byte[] Timestamp { get; set; }
     }
 }
