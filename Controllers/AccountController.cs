@@ -41,7 +41,7 @@ namespace Bitar.Controllers
             ApplicationDbContext context,
             BitcoinService bitcoinService,
             IConfiguration configuration
-            )
+        )
         {
             _logger = logger;
             _options = options.Value;
@@ -85,7 +85,7 @@ namespace Bitar.Controllers
                     claims: principal.Claims,
                     expires: DateTime.UtcNow.AddDays(_options.JwtExpireDays),
                     signingCredentials: new SigningCredentials(new SymmetricSecurityKey(
-                        Encoding.UTF8.GetBytes(_options.JwtKey)),
+                            Encoding.UTF8.GetBytes(_options.JwtKey)),
                         SecurityAlgorithms.HmacSha256
                     ));
 
@@ -124,11 +124,12 @@ namespace Bitar.Controllers
             {
                 await CreateAccountData(register.Id);
 
-                var login = new LoginDTO(){
+                var login = new LoginDTO()
+                {
                     User = register.Id,
                     Password = register.Password
                 };
-                
+
                 return await Login(login);
             }
 
@@ -140,7 +141,7 @@ namespace Bitar.Controllers
             try
             {
                 // Don't try to create account data if it already exists.
-                if (await _userManager.FindByIdAsync(id) == null) return;
+                if (await _userManager.FindByIdAsync(id) == null)return;
 
                 var accountData = new AccountData
                 {
@@ -170,6 +171,11 @@ namespace Bitar.Controllers
         [HttpGet]
         public ActionResult<string> Protected()
         {
+            _logger.LogCritical("HAHAHAHAHAHAHAHAHAHAHA");
+            _logger.LogCritical(HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
+            _logger.LogCritical("HAHAHAHAHAHAHAHAHAHAHA");
+            _logger.LogCritical(HttpContext.User.Claims.FirstOrDefault(c => c.Type == "sub")?.Value);
+            _logger.LogCritical("HAHAHAHAHAHAHAHAHAHAHA");
             return "Protected area";
         }
 
