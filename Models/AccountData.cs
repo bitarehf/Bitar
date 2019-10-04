@@ -20,9 +20,9 @@ namespace Bitar.Models
 
         [DefaultValue(0)]
         [Range(0, int.MaxValue)]
+        [ConcurrencyCheck]
         public decimal Balance { get; set; }
+        [ConcurrencyCheck]
         public virtual List<Transaction> Transactions { get; set; }
-        [Timestamp]
-        public byte[] Timestamp { get; set; }
     }
 }
