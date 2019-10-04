@@ -23,6 +23,7 @@ namespace Bitar.Models
         [ConcurrencyCheck]
         public decimal Balance { get; set; }
         [ConcurrencyCheck]
+        [ForeignKey("PersonalId")]
         public virtual List<Transaction> Transactions { get; set; }
     }
 }
