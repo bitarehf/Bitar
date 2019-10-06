@@ -56,10 +56,12 @@ namespace Bitar.Services
 
         public async void UpdateStockPrices(object state)
         {
-            List<Stock> stocks = await _landsbankinn.FetchCurrencyUpdates();
+            List<Stock> stocks = new List<Stock>();
+            List<Stock> landsbankinnStocks = await _landsbankinn.FetchCurrencyUpdates();
 
             decimal eurisk = decimal.Zero;
-            foreach (var stock in stocks)
+            decimal usdisk = decimal.Zero;
+            foreach (var stock in landsbankinnStocks)
             {
                 if (stock.Price == decimal.Zero)
                 {
@@ -71,6 +73,11 @@ namespace Bitar.Services
                 if (stock.Symbol == Symbol.EUR)
                 {
                     eurisk = stock.Price;
+                }
+
+                if (stock.Symbol == Symbol.USD)
+                {
+                    usdisk = stock.Price;
                 }
             }
 
@@ -84,7 +91,10 @@ namespace Bitar.Services
 
             decimal btcisk = eurisk * btceur;
 
-            stocks.Add(new Stock() { Symbol = Symbol.BTC, Price = btcisk * 0.995m + 50m });
+            stocks.Add(new Stock() { Symbol = Symbol.BTC, Price = btcisk * 1.02m + 50m });
+            stocks.Add(new Stock() { Symbol = Symbol.ISK, Price = 1m });
+            stocks.Add(new Stock() { Symbol = Symbol.EUR, Price = eurisk });
+            stocks.Add(new Stock() { Symbol = Symbol.USD, Price = usdisk });
             Stocks = stocks;
             OpenMarket();
 
