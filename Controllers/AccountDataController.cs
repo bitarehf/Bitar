@@ -14,6 +14,7 @@ using NBitcoin;
 namespace Bitar.Controllers
 {
     [Route("[controller]/[action]")]
+    [Authorize]
     [ApiController]
     public class AccountDataController : ControllerBase
     {
@@ -28,21 +29,14 @@ namespace Bitar.Controllers
             _context = context;
         }
 
-        // GET: api/AccountData
-        [Authorize]
+        // GET: api.bitar.is/AccountData/GetAccountData
         [HttpGet]
-        public async Task<AccountData> AccountData()
+        public async Task<AccountData> GetAccountData()
         {
             string id = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier).Value;
             return await _context.AccountData.FindAsync(id);
         }
 
-        // GET: api/AccountData/4708180420
-        [HttpGet("{id}")]
-        public async Task<ActionResult<AccountData>> AccountData(string id)
-        {
-            return await _context.AccountData.FindAsync(id);
-        }
 
         // POST: api/AccountData
         /// <summary>
@@ -59,17 +53,21 @@ namespace Bitar.Controllers
             return BitcoinAddress.Create(accountData.WithdrawalAddress, Network.Main);
         }
 
-        [HttpGet("{id}")]
-        public async Task<ActionResult<string>> GetDepositAddress(string id)
+        [HttpGet]
+        public async Task<ActionResult<string>> GetDepositAddress()
         {
-            var result = await _bitcoin.GetDepositAddress(id);
-            return result.ToString();
+            string id = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier).Value;
+            BitcoinWitPubKeyAddress address = await _bitcoin.GetDepositAddress(id);
+            return address.ToString();
         }
 
         [HttpGet]
-        public async Task<ActionResult<Money>> GetAddressBalance(string address)
+        public async Task<ActionResult<Money>> GetAddressBalance()
         {
-            return await _bitcoin.GetAddressBalance(BitcoinAddress.Create(address, Network.Main));
+            string id = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier).Value;
+            BitcoinWitPubKeyAddress address = await _bitcoin.GetDepositAddress(id);
+            
+            return await _bitcoin.GetAddressBalance(address);
         }
     }
 }

@@ -82,7 +82,6 @@ namespace Bitar.Services
             catch (Exception e)
             {
                 _logger.LogError(e.ToString());
-                Login(_options.Username, _options.Password);
             }
 
             return null; // No transactions received.
@@ -130,7 +129,6 @@ namespace Bitar.Services
             catch (Exception e)
             {
                 _logger.LogError(e.ToString());
-                Login(_options.Username, _options.Password);
             }
 
             return stocks;
@@ -264,6 +262,7 @@ namespace Bitar.Services
             catch (Exception e)
             {
                 _logger.LogError(e.ToString());
+                Login(_options.Username, _options.Password);
             }
 
             return null;
