@@ -93,7 +93,7 @@ namespace Bitar.Services
 
             // BIP84 - Derivation scheme for P2WPKH based accounts.
             // m / 84' / coin_type' / account' / change / address
-            ExtKey key = _masterKey.Derive(new KeyPath("m/84'/0'/0'/0/" + accountData.Derivation));
+            ExtKey key = _masterKey.Derive(new KeyPath($"m/84'/0'/0'/0/0"));
             return key.PrivateKey.PubKey.GetSegwitAddress(Network.Main);
         }
 
@@ -112,7 +112,7 @@ namespace Bitar.Services
             {
                 var accountData = await GetAccountData(id);
                 
-                ExtKey key = _masterKey.Derive(new KeyPath("m/84'/0'/0'/0/" + accountData.Derivation));
+                ExtKey key = _masterKey.Derive(new KeyPath($"m/84'/0'/{accountData.Derivation}'/0/0"));
                 var senderAddress = key.PrivateKey.PubKey.GetSegwitAddress(Network.Main);
                 var unspentCoins = await _client.ListUnspentAsync(6, 99999999, senderAddress);
                 var estimateFeeRate = await _client.EstimateSmartFeeAsync(8);
