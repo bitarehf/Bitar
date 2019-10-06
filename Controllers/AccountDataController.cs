@@ -62,12 +62,12 @@ namespace Bitar.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<Money>> GetAddressBalance()
+        public async Task<ActionResult<decimal>> GetAddressBalance()
         {
             string id = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier).Value;
             BitcoinWitPubKeyAddress address = await _bitcoin.GetDepositAddress(id);
-            
-            return await _bitcoin.GetAddressBalance(address);
+            Money result = await _bitcoin.GetAddressBalance(address);
+            return result.ToDecimal(MoneyUnit.BTC);
         }
     }
 }
