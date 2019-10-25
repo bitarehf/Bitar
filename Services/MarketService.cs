@@ -16,7 +16,7 @@ using NBitcoin;
 
 namespace Bitar.Services
 {
-    public class PaymentService : IHostedService
+    public class MarketService : IHostedService
     {
         private readonly ILogger _logger;
         private readonly IServiceScopeFactory _scopeFactory;
@@ -26,8 +26,8 @@ namespace Bitar.Services
         private readonly KrakenService _kraken;
         private readonly StockService _stock;
 
-        public PaymentService(
-            ILogger<PaymentService> logger,
+        public MarketService(
+            ILogger<MarketService> logger,
             IServiceScopeFactory scopeFactory,
             BitcoinService bitcoin,
             LandsbankinnService landsbankinn,
@@ -53,7 +53,7 @@ namespace Bitar.Services
 
         public async Task StartAsync(CancellationToken cancellationToken)
         {
-            _logger.LogInformation("PaymentService is starting.");
+            _logger.LogInformation("MarketService is starting.");
 
             await _stock.StartAsync(cancellationToken);
 
@@ -64,7 +64,7 @@ namespace Bitar.Services
 
         public Task StopAsync(CancellationToken cancellationToken)
         {
-            _logger.LogInformation("PaymentService is stopping.");
+            _logger.LogInformation("MarketService is stopping.");
 
             _timer?.Change(Timeout.Infinite, 0);
 
@@ -73,7 +73,7 @@ namespace Bitar.Services
 
         private async void CheckPayments(object state)
         {
-            using(var scope = _scopeFactory.CreateScope())
+            using (var scope = _scopeFactory.CreateScope())
             {
                 var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
@@ -130,26 +130,63 @@ namespace Bitar.Services
             }
         }
 
+        public async Task<uint256> Buy(string id, decimal isk)
+        {
+            using (var scope = _scopeFactory.CreateScope())
+            {
+                var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+                var accountData = await context.AccountData.FindAsync(id);
+
+                if (accountData.Balance >= isk)
+                {
+                    List<Stock> stocks = _stock.Stocks;
+                    decimal btcisk = decimal.Zero;
+
+                    if (_stock.MarketState == MarketState.Open)
+                    {
+                        foreach (var stock in stocks)
+                        {
+                            if (stock.Symbol == Symbol.BTC)
+                            {
+                                btcisk = stock.Price;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        _logger.LogCritical("Buying cancelled because market is closed.");
+                        return null;
+                    }
+
+                    var btcAmount = Math.Round(isk / btcisk, 8, MidpointRounding.ToZero);
+                    Money amount = new Money(btcAmount, MoneyUnit.Satoshi);
+                    return await _bitcoin.MakePayment(id, amount);
+                }
+            }
+
+            return null;
+        }
+
         private async Task<List<Bitar.Models.Transaction>> FetchTransactions()
         {
             List<LI_Fyrirspurn_reikningsyfirlit_svarFaersla> tx = await _landsbankinn.FetchTransactions();
             List<Bitar.Models.Transaction> transactions = new List<Bitar.Models.Transaction>();
 
-            if (tx == null)return null;
+            if (tx == null) return null;
 
             // Converts to the transaction to the transaction model we are using.
             foreach (var transaction in tx)
             {
-                if (transaction.faerslulykill != "01")continue; // Do not remove this line.
+                if (transaction.faerslulykill != "01") continue; // Do not remove this line.
 
                 transactions.Add(new Bitar.Models.Transaction
                 {
                     Date = transaction.bokunardags,
-                        PersonalId = transaction.kt_greidanda,
-                        Reference = transaction.tekka_sedilnr,
-                        ShortReference = transaction.tilvisun,
-                        PaymentDetail = transaction.skyring_tilvisunar,
-                        Amount = transaction.upphaed
+                    PersonalId = transaction.kt_greidanda,
+                    Reference = transaction.tekka_sedilnr,
+                    ShortReference = transaction.tilvisun,
+                    PaymentDetail = transaction.skyring_tilvisunar,
+                    Amount = transaction.upphaed
                 });
             }
 

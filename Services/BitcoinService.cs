@@ -46,17 +46,51 @@ namespace Bitar.Services
             _client = new RPCClient(credentialString, Network.Main);
         }
 
-        public async Task<uint256> MakePayment(string address, Money amount)
+        public async Task<uint256> MakePayment(string id, Money amount)
         {
             try
             {
-                var bitcoinAddress = BitcoinAddress.Create(address, Network.Main);
-                return await _client.SendToAddressAsync(bitcoinAddress, amount);
+                var accountData = await GetAccountData(id);
+
+                ExtKey key = _masterKey.Derive(new KeyPath($"m/84'/0'/{accountData.Derivation}'/0/0"));
+                var receiverAddress = key.PrivateKey.PubKey.GetSegwitAddress(Network.Main);
+
+                ExtKey bitarKey = _masterKey.Derive(new KeyPath($"m/84'/0'/0'/0/0"));
+                var senderAddress = bitarKey.PrivateKey.PubKey.GetSegwitAddress(Network.Main);
+                var unspentCoins = await _client.ListUnspentAsync(6, 99999999, senderAddress);
+
+                var estimateFeeRate = await _client.EstimateSmartFeeAsync(8);
+
+                var tx = Network.Main.CreateTransactionBuilder()
+                    .AddCoins(unspentCoins.Select(c => c.AsCoin()))
+                    .AddKeys(key)
+                    .Send(receiverAddress, amount)
+                    .SendEstimatedFees(estimateFeeRate.FeeRate)
+                    .SetChange(senderAddress)
+                    .BuildTransaction(true);
+
+
+                _logger.LogCritical("==============");
+                _logger.LogCritical($"HasWitness: {tx.HasWitness}");
+                _logger.LogCritical($"Inputs: {tx.Inputs}");
+                _logger.LogCritical($"Inputs.Transaction: {tx.Inputs.Transaction}");
+                _logger.LogCritical($"IsCoinBase: {tx.IsCoinBase}");
+                _logger.LogCritical($"LockTime: {tx.LockTime}");
+                _logger.LogCritical($"Outputs: {tx.Outputs}");
+                _logger.LogCritical($"Outputs.Transaction: {tx.Outputs.Transaction}");
+                _logger.LogCritical($"RBF: {tx.RBF}");
+                _logger.LogCritical($"TotalOut: {tx.TotalOut}");
+                _logger.LogCritical($"Version: {tx.Version}");
+                _logger.LogCritical("==============");
+                
+                return await _client.SendRawTransactionAsync(tx);
+
             }
             catch (Exception e)
             {
                 _logger.LogError(e.ToString());
             }
+
             return null;
         }
 
@@ -111,7 +145,7 @@ namespace Bitar.Services
             try
             {
                 var accountData = await GetAccountData(id);
-                
+
                 ExtKey key = _masterKey.Derive(new KeyPath($"m/84'/0'/{accountData.Derivation}'/0/0"));
                 var senderAddress = key.PrivateKey.PubKey.GetSegwitAddress(Network.Main);
                 var unspentCoins = await _client.ListUnspentAsync(6, 99999999, senderAddress);
@@ -145,7 +179,7 @@ namespace Bitar.Services
             {
                 total += utxo.Amount;
             }
-            
+
             return total;
         }
     }

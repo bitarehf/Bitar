@@ -86,7 +86,7 @@ namespace Bitar
             services.AddSingleton<LandsbankinnService>();
             services.AddSingleton<KrakenService>();
             services.AddSingleton<StockService>();
-            services.AddHostedService<PaymentService>();
+            services.AddHostedService<MarketService>();
 
             services.AddControllers();
 
@@ -103,6 +103,8 @@ namespace Bitar
             }
 
             app.UseRouting();
+            
+            app.UseForwardedHeaders();
 
             app.UseAuthentication();
             app.UseAuthorization();
@@ -113,7 +115,6 @@ namespace Bitar
                 .AllowAnyMethod()
                 .AllowCredentials());
 
-            app.UseForwardedHeaders();
 
             app.UseEndpoints(endpoints =>
             {
