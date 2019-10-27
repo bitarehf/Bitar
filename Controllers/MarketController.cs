@@ -31,7 +31,7 @@ namespace Bitar.Controllers
         public async Task<ActionResult<uint256>> Boing()
         {
             //string id = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier).Value;
-            var result = await _market.Buy("0411002650", 2000m);
+            var result = await _market.Buy("0411002650", 20000m);
             if (result == null)
             {
                 return NotFound("Buying failed.");

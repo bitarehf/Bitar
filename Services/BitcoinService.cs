@@ -7,6 +7,7 @@ using Microsoft.IdentityModel.Tokens;
 using NBitcoin;
 using NBitcoin.RPC;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
@@ -58,13 +59,14 @@ namespace Bitar.Services
                 ExtKey bitarKey = _masterKey.Derive(new KeyPath($"m/84'/0'/0'/0/0"));
                 var senderAddress = bitarKey.PrivateKey.PubKey.GetSegwitAddress(Network.Main);
                 var unspentCoins = await _client.ListUnspentAsync(6, int.MaxValue, senderAddress);
-                
+
                 foreach (var coin in unspentCoins)
                 {
                     _logger.LogDebug($"Address: {coin.Address}");
                     _logger.LogDebug($"Amount: {coin.Amount}");
                     _logger.LogDebug($"Confirmations: {coin.Confirmations}");
                     _logger.LogDebug($"IsSpendable: {coin.IsSpendable}");
+
                     _logger.LogDebug($"OutPoint: {coin.OutPoint}");
                     _logger.LogDebug($"ScriptPubKey: {coin.ScriptPubKey}");
                 }
@@ -84,9 +86,9 @@ namespace Bitar.Services
                     .AddCoins(unspentCoins.Select(c => c.AsCoin()))
                     .AddKeys(bitarKey)
                     .Send(receiverAddress, amount)
-                    //.SendEstimatedFees(estimateFeeRate.FeeRate)
+                    .SendEstimatedFees(estimateFeeRate.FeeRate)
                     .SetChange(senderAddress)
-                    .BuildTransaction(true);
+                    .BuildTransaction(false);
 
 
                 _logger.LogDebug("==============");
