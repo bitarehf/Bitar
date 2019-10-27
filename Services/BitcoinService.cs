@@ -84,11 +84,11 @@ namespace Bitar.Services
 
                 var tx = Network.Main.CreateTransactionBuilder()
                     .AddCoins(unspentCoins.Select(c => c.AsCoin()))
-                    .AddKeys(bitarKey)
+                    .AddKeys(bitarKey.PrivateKey)
                     .Send(receiverAddress, amount)
                     .SendEstimatedFees(estimateFeeRate.FeeRate)
                     .SetChange(senderAddress)
-                    .BuildTransaction(false);
+                    .BuildTransaction(true);
 
 
                 _logger.LogDebug("==============");
