@@ -59,11 +59,23 @@ namespace Bitar.Services
                 var senderAddress = bitarKey.PrivateKey.PubKey.GetSegwitAddress(Network.Main);
                 var unspentCoins = await _client.ListUnspentAsync(6, 99999999, senderAddress);
 
+                foreach (var coin in unspentCoins)
+                {
+
+                    _logger.LogCritical($"Account: {coin.Account}");
+                    _logger.LogCritical($"Address: {coin.Address}");
+                    _logger.LogCritical($"Confirmations: {coin.Confirmations}");
+                    _logger.LogCritical($"IsSpendable: {coin.IsSpendable}");
+                    _logger.LogCritical($"OutPoint: {coin.OutPoint}");
+                    _logger.LogCritical($"RedeemScript: {coin.RedeemScript}");
+                    _logger.LogCritical($"ScriptPubKey: {coin.ScriptPubKey}");
+                }
+
                 var estimateFeeRate = await _client.EstimateSmartFeeAsync(8);
 
                 var tx = Network.Main.CreateTransactionBuilder()
                     .AddCoins(unspentCoins.Select(c => c.AsCoin()))
-                    .AddKeys(key)
+                    .AddKeys(bitarKey)
                     .Send(receiverAddress, amount)
                     .SendEstimatedFees(estimateFeeRate.FeeRate)
                     .SetChange(senderAddress)
@@ -82,7 +94,7 @@ namespace Bitar.Services
                 _logger.LogCritical($"TotalOut: {tx.TotalOut}");
                 _logger.LogCritical($"Version: {tx.Version}");
                 _logger.LogCritical("==============");
-                
+
                 //return await _client.SendRawTransactionAsync(tx);
 
             }
