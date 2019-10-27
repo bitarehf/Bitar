@@ -30,7 +30,7 @@ namespace Bitar.Controllers
         private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly ApplicationDbContext _context;
-        private readonly BitcoinService _bitcoinService;
+        private readonly BitcoinService _bitcoin;
         private readonly IConfiguration _configuration;
 
         public AccountController(
@@ -39,7 +39,7 @@ namespace Bitar.Controllers
             UserManager<ApplicationUser> userManager,
             SignInManager<ApplicationUser> signInManager,
             ApplicationDbContext context,
-            BitcoinService bitcoinService,
+            BitcoinService bitcoin,
             IConfiguration configuration
         )
         {
@@ -48,7 +48,7 @@ namespace Bitar.Controllers
             _userManager = userManager;
             _signInManager = signInManager;
             _context = context;
-            _bitcoinService = bitcoinService;
+            _bitcoin = bitcoin;
             _configuration = configuration;
         }
 
@@ -151,9 +151,9 @@ namespace Bitar.Controllers
                 await _context.AccountData.AddAsync(accountData);
                 await _context.SaveChangesAsync();
 
-                var address = await _bitcoinService.GetDepositAddress(id);
+                var address = await _bitcoin.GetDepositAddress(id);
                 // Import Address to bitcoin node to keep track of it.
-                await _bitcoinService.ImportAddress(address, id);
+                await _bitcoin.ImportAddress(address, id);
 
             }
             catch (WebException)
