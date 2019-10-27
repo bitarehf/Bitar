@@ -21,7 +21,6 @@ namespace Bitar.Services
         private readonly ILogger _logger;
         private readonly IServiceScopeFactory _scopeFactory;
         private Timer _timer;
-        private readonly BitcoinService _bitcoin;
         private readonly LandsbankinnService _landsbankinn;
         private readonly KrakenService _kraken;
         private readonly StockService _stock;
@@ -36,7 +35,6 @@ namespace Bitar.Services
         {
             _logger = logger;
             _scopeFactory = scopeFactory;
-            _bitcoin = bitcoin;
             _landsbankinn = landsbankinn;
             _kraken = kraken;
             _stock = stock;
@@ -128,43 +126,6 @@ namespace Bitar.Services
                     }
                 }
             }
-        }
-
-        public async Task<uint256> Buy(string id, decimal isk)
-        {
-            using (var scope = _scopeFactory.CreateScope())
-            {
-                var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-                var accountData = await context.AccountData.FindAsync(id);
-
-                if (accountData.Balance >= isk)
-                {
-                    List<Stock> stocks = _stock.Stocks;
-                    decimal btcisk = decimal.Zero;
-
-                    if (_stock.MarketState == MarketState.Open)
-                    {
-                        foreach (var stock in stocks)
-                        {
-                            if (stock.Symbol == Symbol.BTC)
-                            {
-                                btcisk = stock.Price;
-                            }
-                        }
-                    }
-                    else
-                    {
-                        _logger.LogCritical("Buying cancelled because market is closed.");
-                        return null;
-                    }
-
-                    var btcAmount = Math.Round(isk / btcisk, 8, MidpointRounding.ToZero);
-                    Money amount = new Money(btcAmount, MoneyUnit.Satoshi);
-                    return await _bitcoin.MakePayment(id, amount);
-                }
-            }
-
-            return null;
         }
 
         private async Task<List<Bitar.Models.Transaction>> FetchTransactions()

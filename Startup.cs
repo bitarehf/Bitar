@@ -2,6 +2,7 @@
 using Bitar.Hubs;
 using Bitar.Models;
 using Bitar.Models.Settings;
+using Bitar.Repositories;
 using Bitar.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
@@ -82,6 +83,7 @@ namespace Bitar
             services.Configure<LandsbankinnSettings>(Configuration.GetSection("LandsbankinnSettings"));
             services.Configure<KrakenSettings>(Configuration.GetSection("KrakenSettings"));
 
+            services.AddScoped<MarketRepository>();
             services.AddSingleton<BitcoinService>();
             services.AddSingleton<LandsbankinnService>();
             services.AddSingleton<KrakenService>();

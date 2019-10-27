@@ -4,7 +4,7 @@ using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using Bitar.Models;
-using Bitar.Services;
+using Bitar.Repositories;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -14,30 +14,39 @@ using NBitcoin;
 namespace Bitar.Controllers
 {
     [Route("[controller]/[action]")]
-    [Authorize]
     [ApiController]
     public class MarketController : ControllerBase
     {
         private readonly ILogger<MarketController> _logger;
-        private readonly MarketService _market;
-        private readonly ApplicationDbContext _context;
+        private readonly MarketRepository _market;
 
-        public MarketController(ILogger<MarketController> logger, ApplicationDbContext context, MarketService market)
+        public MarketController(ILogger<MarketController> logger, MarketRepository market)
         {
             _logger = logger;
             _market = market;
-            _context = context;
         }
 
         // GET: api.bitar.is/Market/xxx??
         [HttpGet]
-        public async Task<AccountData> GetAccountData()
+        public async Task<ActionResult<uint256>> Boing()
         {
-            string id = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier).Value;
-            return await _context.AccountData.FindAsync(id);
+            //string id = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier).Value;
+            var result = await _market.Buy("0", 2000m);
+            if (result == null)
+            {
+                return Conflict("Buying failed.");
+            }
+
+            return result;
         }
 
-
+        // GET: api.bitar.is/Market/xxx??
+        // [HttpGet]
+        // public async Task<AccountData> GetAccountData()
+        // {
+        //     string id = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier).Value;
+        //     return await _context.AccountData.FindAsync(id);
+        // }
 
         // POST: api.bitar.is/Market/Buy
         /// <summary>

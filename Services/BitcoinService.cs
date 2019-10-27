@@ -83,7 +83,7 @@ namespace Bitar.Services
                 _logger.LogCritical($"Version: {tx.Version}");
                 _logger.LogCritical("==============");
                 
-                return await _client.SendRawTransactionAsync(tx);
+                //return await _client.SendRawTransactionAsync(tx);
 
             }
             catch (Exception e)
@@ -127,7 +127,7 @@ namespace Bitar.Services
 
             // BIP84 - Derivation scheme for P2WPKH based accounts.
             // m / 84' / coin_type' / account' / change / address
-            ExtKey key = _masterKey.Derive(new KeyPath($"m/84'/0'/0'/0/0"));
+            ExtKey key = _masterKey.Derive(new KeyPath($"m/84'/0'/{accountData.Derivation}'/0/0"));
             return key.PrivateKey.PubKey.GetSegwitAddress(Network.Main);
         }
 
@@ -159,7 +159,7 @@ namespace Bitar.Services
                     .SetChange(senderAddress)
                     .BuildTransaction(true);
 
-                return await _client.SendRawTransactionAsync(tx);
+                //return await _client.SendRawTransactionAsync(tx);
 
             }
             catch (Exception e)
