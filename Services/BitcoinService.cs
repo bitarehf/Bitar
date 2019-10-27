@@ -62,13 +62,13 @@ namespace Bitar.Services
                 foreach (var coin in unspentCoins)
                 {
 
-                    _logger.LogCritical($"Account: {coin.Account}");
-                    _logger.LogCritical($"Address: {coin.Address}");
-                    _logger.LogCritical($"Confirmations: {coin.Confirmations}");
-                    _logger.LogCritical($"IsSpendable: {coin.IsSpendable}");
-                    _logger.LogCritical($"OutPoint: {coin.OutPoint}");
-                    _logger.LogCritical($"RedeemScript: {coin.RedeemScript}");
-                    _logger.LogCritical($"ScriptPubKey: {coin.ScriptPubKey}");
+                    _logger.LogDebug($"Account: {coin.Account}");
+                    _logger.LogDebug($"Address: {coin.Address}");
+                    _logger.LogDebug($"Confirmations: {coin.Confirmations}");
+                    _logger.LogDebug($"IsSpendable: {coin.IsSpendable}");
+                    _logger.LogDebug($"OutPoint: {coin.OutPoint}");
+                    _logger.LogDebug($"RedeemScript: {coin.RedeemScript}");
+                    _logger.LogDebug($"ScriptPubKey: {coin.ScriptPubKey}");
                 }
 
                 var estimateFeeRate = await _client.EstimateSmartFeeAsync(8);
@@ -77,23 +77,23 @@ namespace Bitar.Services
                     .AddCoins(unspentCoins.Select(c => c.AsCoin()))
                     .AddKeys(bitarKey)
                     .Send(receiverAddress, amount)
-                    .SendEstimatedFees(estimateFeeRate.FeeRate)
+                    //.SendEstimatedFees(estimateFeeRate.FeeRate)
                     .SetChange(senderAddress)
                     .BuildTransaction(true);
 
 
-                _logger.LogCritical("==============");
-                _logger.LogCritical($"HasWitness: {tx.HasWitness}");
-                _logger.LogCritical($"Inputs: {tx.Inputs}");
-                _logger.LogCritical($"Inputs.Transaction: {tx.Inputs.Transaction}");
-                _logger.LogCritical($"IsCoinBase: {tx.IsCoinBase}");
-                _logger.LogCritical($"LockTime: {tx.LockTime}");
-                _logger.LogCritical($"Outputs: {tx.Outputs}");
-                _logger.LogCritical($"Outputs.Transaction: {tx.Outputs.Transaction}");
-                _logger.LogCritical($"RBF: {tx.RBF}");
-                _logger.LogCritical($"TotalOut: {tx.TotalOut}");
-                _logger.LogCritical($"Version: {tx.Version}");
-                _logger.LogCritical("==============");
+                _logger.LogDebug("==============");
+                _logger.LogDebug($"HasWitness: {tx.HasWitness}");
+                _logger.LogDebug($"Inputs: {tx.Inputs}");
+                _logger.LogDebug($"Inputs.Transaction: {tx.Inputs.Transaction}");
+                _logger.LogDebug($"IsCoinBase: {tx.IsCoinBase}");
+                _logger.LogDebug($"LockTime: {tx.LockTime}");
+                _logger.LogDebug($"Outputs: {tx.Outputs}");
+                _logger.LogDebug($"Outputs.Transaction: {tx.Outputs.Transaction}");
+                _logger.LogDebug($"RBF: {tx.RBF}");
+                _logger.LogDebug($"TotalOut: {tx.TotalOut}");
+                _logger.LogDebug($"Version: {tx.Version}");
+                _logger.LogDebug("==============");
 
                 //return await _client.SendRawTransactionAsync(tx);
 
