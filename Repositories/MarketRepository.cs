@@ -37,7 +37,7 @@ namespace Bitar.Repositories
 
             using (var scope = _serviceProvider.CreateScope())
             {
-                var _stockService = scope.ServiceProvider.GetService<StockService>();
+                var _stockService = scope.ServiceProvider.GetRequiredService<StockService>();
 
                 if (_stockService.MarketState == MarketState.Open)
                 {
@@ -51,26 +51,38 @@ namespace Bitar.Repositories
                 }
                 else
                 {
-                    _logger.LogCritical("Buying cancelled because market is closed.");
+                    _logger.LogCritical("Order cancelled because market is closed.");
                     return null;
                 }
             }
 
             if (btcisk == Decimal.Zero)
             {
-                _logger.LogCritical("Buying cancelled because btcisk value was zero, this should never happen.");
+                _logger.LogCritical("Order cancelled because btcisk value was zero, this should never happen.");
                 return null;
             }
 
+            var btcAmount = Math.Round(isk / btcisk, 8, MidpointRounding.ToZero);
             if (accountData.Balance >= isk)
             {
 
-                var btcAmount = Math.Round(isk / btcisk, 8, MidpointRounding.ToZero);
                 Money amount = new Money(btcAmount, MoneyUnit.Satoshi);
-                
+
                 _logger.LogInformation($"{id} bought {btcAmount} Bitcoin for {isk} ISK with a rate of {btcisk}");
 
-                return await _bitcoin.MakePayment(id, amount);
+                using (var scope = _serviceProvider.CreateScope())
+                {
+                    var _bitcoin = scope.ServiceProvider.GetRequiredService<BitcoinService>();
+                    return await _bitcoin.MakePayment(id, amount);
+                }
+            }
+            else
+            {
+                _logger.LogCritical($"Order cancelled.");
+                _logger.LogCritical($"{id} does not have sufficient balance for the order.");
+                _logger.LogCritical($"Order => {btcAmount} BTC for {isk} ISK.");
+                _logger.LogCritical($"Current balance: {accountData.Balance} ISK.");
+                return null;
             }
 
             return null;
