@@ -175,6 +175,11 @@ namespace Bitar.Services
             Money total = new Money(Decimal.Zero, MoneyUnit.BTC);
 
             var utxos = await _client.ListUnspentAsync(1, 99999999, address);
+            if (utxos == null)
+            {
+                _logger.LogCritical("utxos null?");
+            }
+
             foreach (var utxo in utxos)
             {
                 total += utxo.Amount;
