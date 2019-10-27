@@ -57,19 +57,26 @@ namespace Bitar.Services
 
                 ExtKey bitarKey = _masterKey.Derive(new KeyPath($"m/84'/0'/0'/0/0"));
                 var senderAddress = bitarKey.PrivateKey.PubKey.GetSegwitAddress(Network.Main);
-                var unspentCoins = await _client.ListUnspentAsync(6, 99999999, senderAddress);
-
+                var unspentCoins = await _client.ListUnspentAsync(6, int.MaxValue, senderAddress);
+                
                 foreach (var coin in unspentCoins)
                 {
-
-                    _logger.LogDebug($"Account: {coin.Account}");
                     _logger.LogDebug($"Address: {coin.Address}");
+                    _logger.LogDebug($"Amount: {coin.Amount}");
                     _logger.LogDebug($"Confirmations: {coin.Confirmations}");
                     _logger.LogDebug($"IsSpendable: {coin.IsSpendable}");
                     _logger.LogDebug($"OutPoint: {coin.OutPoint}");
-                    _logger.LogDebug($"RedeemScript: {coin.RedeemScript}");
                     _logger.LogDebug($"ScriptPubKey: {coin.ScriptPubKey}");
                 }
+
+                var unspentTotalAmount = unspentCoins.Select(o => o.AsCoin()).Select(o => o.Amount).Sum();
+                if (unspentTotalAmount < amount)
+                {
+                    _logger.LogCritical("Not enough funds");
+                    return null;
+                }
+
+                
 
                 var estimateFeeRate = await _client.EstimateSmartFeeAsync(8);
 
