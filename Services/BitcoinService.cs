@@ -32,41 +32,47 @@ namespace Bitar.Services
             _scopeFactory = scopeFactory;
             _masterKey = new BitcoinExtKey(_options.MasterKey, Network.Main);
 
-            var credentials = new NetworkCredential()
-            {
-                UserName = _options.Username,
-                Password = _options.Password
-            };
-
-            var credentialString = new RPCCredentialString()
+            var credentialString = new RPCCredentialString
             {
                 Server = _options.Server,
-                UserPassword = credentials
+                UserPassword = new NetworkCredential
+                {
+                    UserName = _options.Username,
+                    Password = _options.Password
+                }
             };
 
             _client = new RPCClient(credentialString, Network.Main);
         }
 
+        /// <summary>
+        /// Sends specified amount <paramref name="amount"/> of bitcoin to the wallet of the user
+        /// with Id value of the Id <paramref name="id"/> parameter.
+        /// </summary>
+        /// <param name="id">Id of the receiver.</param>
+        /// <param name="money">Amount of bitcoin to send.</param>
+        /// <remarks>
+        /// Change address is the same as the sender address.
+        /// </remarks>
+        /// <returns>Transaction (uint256) or null.</returns>
         public async Task<uint256> MakePayment(string id, Money amount)
         {
             try
             {
                 var accountData = await GetAccountData(id);
 
-                ExtKey key = _masterKey.Derive(new KeyPath($"m/84'/0'/{accountData.Derivation}'/0/0"));
-                var receiverAddress = key.PrivateKey.PubKey.GetSegwitAddress(Network.Main);
-
                 ExtKey bitarKey = _masterKey.Derive(new KeyPath($"m/84'/0'/0'/0/0"));
-                var senderAddress = bitarKey.PrivateKey.PubKey.GetSegwitAddress(Network.Main);
-                var unspentCoins = await _client.ListUnspentAsync(6, int.MaxValue, senderAddress);
+                var sender = bitarKey.PrivateKey.PubKey.GetSegwitAddress(Network.Main);
 
+                ExtKey key = _masterKey.Derive(new KeyPath($"m/84'/0'/{accountData.Derivation}'/0/0"));
+                var receiver = key.PrivateKey.PubKey.GetSegwitAddress(Network.Main);
+
+                var unspentCoins = await _client.ListUnspentAsync(6, int.MaxValue, sender);
                 foreach (var coin in unspentCoins)
                 {
                     _logger.LogDebug($"Address: {coin.Address}");
                     _logger.LogDebug($"Amount: {coin.Amount}");
                     _logger.LogDebug($"Confirmations: {coin.Confirmations}");
-                    _logger.LogDebug($"IsSpendable: {coin.IsSpendable}");
-
                     _logger.LogDebug($"OutPoint: {coin.OutPoint}");
                     _logger.LogDebug($"ScriptPubKey: {coin.ScriptPubKey}");
                 }
@@ -74,35 +80,28 @@ namespace Bitar.Services
                 var unspentTotalAmount = unspentCoins.Select(o => o.AsCoin()).Select(o => o.Amount).Sum();
                 if (unspentTotalAmount < amount)
                 {
-                    _logger.LogCritical("Not enough funds");
+                    _logger.LogCritical("Not enough funds.");
                     return null;
                 }
 
-                
+                var rate = await _client.EstimateSmartFeeAsync(8);
+                _logger.LogDebug($"Estimated fee rate: {rate.FeeRate}");
 
-                var estimateFeeRate = await _client.EstimateSmartFeeAsync(8);
+                var coinSelector = new DefaultCoinSelector
+                {
+                    GroupByScriptPubKey = false
+                };
 
                 var tx = Network.Main.CreateTransactionBuilder()
+                    .SetCoinSelector(coinSelector)
                     .AddCoins(unspentCoins.Select(c => c.AsCoin()))
                     .AddKeys(bitarKey.PrivateKey)
-                    .Send(receiverAddress, amount)
-                    .SendEstimatedFees(estimateFeeRate.FeeRate)
-                    .SetChange(senderAddress)
+                    .Send(receiver, amount)
+                    .SetChange(sender)
+                    .SendEstimatedFees(rate.FeeRate)
                     .BuildTransaction(true);
 
-
-                _logger.LogDebug("==============");
-                _logger.LogDebug($"HasWitness: {tx.HasWitness}");
-                _logger.LogDebug($"Inputs: {tx.Inputs}");
-                _logger.LogDebug($"Inputs.Transaction: {tx.Inputs.Transaction}");
-                _logger.LogDebug($"IsCoinBase: {tx.IsCoinBase}");
-                _logger.LogDebug($"LockTime: {tx.LockTime}");
-                _logger.LogDebug($"Outputs: {tx.Outputs}");
-                _logger.LogDebug($"Outputs.Transaction: {tx.Outputs.Transaction}");
-                _logger.LogDebug($"RBF: {tx.RBF}");
-                _logger.LogDebug($"TotalOut: {tx.TotalOut}");
-                _logger.LogDebug($"Version: {tx.Version}");
-                _logger.LogDebug("==============");
+                _logger.LogDebug(tx.ToString());
 
                 //return await _client.SendRawTransactionAsync(tx);
 
