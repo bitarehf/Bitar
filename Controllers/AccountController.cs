@@ -114,7 +114,8 @@ namespace Bitar.Controllers
                 Email = register.Email
             };
 
-            _logger.LogDebug($@"Id: {register.Id}
+            _logger.LogDebug(
+                $@"Id: {register.Id}
                 Email: {register.Email}
                 Password: {register.Password}");
 
