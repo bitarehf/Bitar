@@ -75,8 +75,8 @@ namespace Bitar.Repositories
             }
             else
             {
-                _logger.LogCritical(
-                    $@"Order cancelled.
+                _logger.LogCritical($@"
+                    Order cancelled.
                     {id} does not have sufficient balance for the order.
                     Order => {amount} BTC for {isk} ISK.
                     Current balance: {accountData.Balance} ISK.");

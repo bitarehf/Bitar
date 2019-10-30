@@ -71,10 +71,10 @@ namespace Bitar.Services
                 LI_Fyrirspurn_reikningsyfirlit_svar response = (LI_Fyrirspurn_reikningsyfirlit_svar)SendAndReceive(request, Type.GetType("Landsbankinn.LI_Fyrirspurn_reikningsyfirlit_svar"));
                 if (response != null)
                 {
-                    _logger.LogInformation($"Reikningsstaða: {response.stada_reiknings}");
+                    _logger.LogInformation($"Account balance: {response.stada_reiknings}");
                     if (response.faerslur != null)
                     {
-                        _logger.LogCritical($"Magn: {response.faerslur.Count()}");
+                        _logger.LogCritical($"Count: {response.faerslur.Count()}");
                         return response.faerslur.ToList();
                     }
                 }

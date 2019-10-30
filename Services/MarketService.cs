@@ -83,14 +83,13 @@ namespace Bitar.Services
 
                 foreach (var transaction in transactions)
                 {
-                    _logger.LogDebug(
-                        $@"Date: {transaction.Date}
+                    _logger.LogDebug($@"
+                        Date: {transaction.Date}
                         PersonalId: {transaction.PersonalId}
                         skyring_tilvisunar: {transaction.Reference}
                         tekka_sedilnr: {transaction.ShortReference}
                         tilvisun: {transaction.PaymentDetail}
-                        upphaed: {transaction.Amount}
-                        ==============================");
+                        upphaed: {transaction.Amount}");
 
                     AccountData accountData = await context.AccountData
                         .Include(x => x.Transactions)
