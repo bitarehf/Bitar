@@ -62,10 +62,10 @@ namespace Bitar.Repositories
                 return null;
             }
 
-            Money amount = Money.Satoshis(Math.Round(isk / btcisk, 8, MidpointRounding.ToZero));
+            Money amount = Money.Coins(Math.Round(isk / btcisk, 8, MidpointRounding.ToZero));
             if (accountData.Balance >= isk)
             {
-                _logger.LogInformation($"{id} bought {amount} Bitcoin for {isk} ISK with a rate of {btcisk}");
+                _logger.LogInformation($"{id} bought {amount} Bitcoin for {isk} ISK at the rate of {btcisk}");
 
                 using (var scope = _serviceProvider.CreateScope())
                 {
