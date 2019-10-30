@@ -84,7 +84,8 @@ namespace Bitar.Services
                     _logger.LogDebug($"CanGetScriptCode: {coin.CanGetScriptCode}");
                     _logger.LogDebug($"Outpoint: {coin.Outpoint}");
                     _logger.LogDebug($"ScriptPubKey: {coin.ScriptPubKey}");
-                    _logger.LogDebug($"TxOut: {coin.TxOut}");
+                    _logger.LogDebug($"TxOut.ScriptPubKey: {coin.TxOut.ScriptPubKey}");
+                    _logger.LogDebug($"TxOut.Value: {coin.TxOut.Value}");
                 }
 
                 if (coins.Select(c => c.Amount).Sum() < amount)
@@ -101,6 +102,7 @@ namespace Bitar.Services
                     GroupByScriptPubKey = false
                 };
 
+                _logger.LogDebug($"Amount: {amount}");
 
                 var tx = Network.Main.CreateTransactionBuilder()
                     .SetCoinSelector(coinSelector)
