@@ -77,8 +77,17 @@ namespace Bitar.Services
                     _logger.LogDebug($"ScriptPubKey: {coin.ScriptPubKey}");
                 }
 
-                var unspentTotalAmount = unspentCoins.Select(o => o.AsCoin()).Select(o => o.Amount).Sum();
-                if (unspentTotalAmount < amount)
+                var coins = unspentCoins.Select(c => c.AsCoin()).ToArray();
+                foreach (var coin in coins)
+                {
+                    _logger.LogDebug($"Amount: {coin.Amount}");
+                    _logger.LogDebug($"CanGetScriptCode: {coin.CanGetScriptCode}");
+                    _logger.LogDebug($"Outpoint: {coin.Outpoint}");
+                    _logger.LogDebug($"ScriptPubKey: {coin.ScriptPubKey}");
+                    _logger.LogDebug($"TxOut: {coin.TxOut}");
+                }
+
+                if (coins.Select(c => c.Amount).Sum() < amount)
                 {
                     _logger.LogCritical("Not enough funds.");
                     return null;
@@ -92,9 +101,10 @@ namespace Bitar.Services
                     GroupByScriptPubKey = false
                 };
 
+
                 var tx = Network.Main.CreateTransactionBuilder()
                     .SetCoinSelector(coinSelector)
-                    .AddCoins(unspentCoins.Select(c => c.AsCoin()))
+                    .AddCoins(coins)
                     .AddKeys(bitarKey.PrivateKey)
                     .Send(receiver, amount)
                     .SetChange(sender)
