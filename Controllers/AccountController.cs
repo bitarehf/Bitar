@@ -114,9 +114,9 @@ namespace Bitar.Controllers
                 Email = register.Email
             };
 
-            _logger.LogInformation("Id:" + register.Id);
-            _logger.LogInformation("Email:" + register.Email);
-            _logger.LogInformation("Password:" + register.Password);
+            _logger.LogDebug($@"Id: {register.Id}
+                Email: {register.Email}
+                Password: {register.Password}");
 
             var result = await _userManager.CreateAsync(user, register.Password);
 
@@ -141,7 +141,7 @@ namespace Bitar.Controllers
             try
             {
                 // Don't try to create account data if it already exists.
-                if (await _userManager.FindByIdAsync(id) == null)return;
+                if (await _userManager.FindByIdAsync(id) == null) return;
 
                 var accountData = new AccountData
                 {
@@ -158,8 +158,7 @@ namespace Bitar.Controllers
             }
             catch (WebException)
             {
-                _logger.LogCritical("Failed to import address to bitcoin node.");
-                _logger.LogCritical("Is the bitcoin node down?");
+                _logger.LogCritical("Failed to import address to bitcoin node. Is the bitcoin node down?");
             }
             catch (Exception e)
             {

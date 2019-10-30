@@ -29,7 +29,7 @@ namespace Bitar.Repositories
             var accountData = await _context.AccountData.FindAsync(id);
             if (accountData == null)
             {
-                _logger.LogCritical($"Buying cancelled because no account with id: {id} was found");
+                _logger.LogCritical($"Order cancelled because no account with id: {id} was found");
                 return null;
             }
 
@@ -65,7 +65,7 @@ namespace Bitar.Repositories
             Money amount = Money.Coins(Math.Round(isk / btcisk, 8, MidpointRounding.ToZero));
             if (accountData.Balance >= isk)
             {
-                _logger.LogInformation($"{id} bought {amount} Bitcoin for {isk} ISK at the rate of {btcisk}");
+                _logger.LogWarning($"{id} bought {amount} Bitcoin for {isk} ISK at the rate of {btcisk}");
 
                 using (var scope = _serviceProvider.CreateScope())
                 {
@@ -75,10 +75,10 @@ namespace Bitar.Repositories
             }
             else
             {
-                _logger.LogCritical($"Order cancelled.");
-                _logger.LogCritical($"{id} does not have sufficient balance for the order.");
-                _logger.LogCritical($"Order => {amount} BTC for {isk} ISK.");
-                _logger.LogCritical($"Current balance: {accountData.Balance} ISK.");
+                _logger.LogCritical($@"Order cancelled.
+                    {id} does not have sufficient balance for the order.
+                    Order => {amount} BTC for {isk} ISK.
+                    Current balance: {accountData.Balance} ISK.");
                 return null;
             }
 

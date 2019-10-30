@@ -70,24 +70,13 @@ namespace Bitar.Services
                 var unspentCoins = await _client.ListUnspentAsync(6, int.MaxValue, sender);
                 foreach (var coin in unspentCoins)
                 {
-                    _logger.LogDebug($"Address: {coin.Address}");
-                    _logger.LogDebug($"Amount: {coin.Amount}");
-                    _logger.LogDebug($"Confirmations: {coin.Confirmations}");
-                    _logger.LogDebug($"OutPoint: {coin.OutPoint}");
-                    _logger.LogDebug($"ScriptPubKey: {coin.ScriptPubKey}");
+                    _logger.LogDebug($@"Address: {coin.Address}
+                        Amount: {coin.Amount}
+                        Confirmations: {coin.Confirmations}
+                        OutPoint: {coin.OutPoint}");
                 }
 
                 var coins = unspentCoins.Select(c => c.AsCoin()).ToArray();
-                foreach (var coin in coins)
-                {
-                    _logger.LogDebug($"Amount: {coin.Amount}");
-                    _logger.LogDebug($"CanGetScriptCode: {coin.CanGetScriptCode}");
-                    _logger.LogDebug($"Outpoint: {coin.Outpoint}");
-                    _logger.LogDebug($"ScriptPubKey: {coin.ScriptPubKey}");
-                    _logger.LogDebug($"TxOut.ScriptPubKey: {coin.TxOut.ScriptPubKey}");
-                    _logger.LogDebug($"TxOut.Value: {coin.TxOut.Value}");
-                }
-
                 if (coins.Select(c => c.Amount).Sum() < amount)
                 {
                     _logger.LogCritical("Not enough funds.");
@@ -102,10 +91,8 @@ namespace Bitar.Services
                     GroupByScriptPubKey = false
                 };
 
-                _logger.LogDebug($"Amount: {amount}");
-
                 var tx = Network.Main.CreateTransactionBuilder()
-                    .SetCoinSelector(coinSelector)
+                    .SetCoinSelector(new DefaultCoinSelector { GroupByScriptPubKey = false })
                     .AddCoins(coins)
                     .AddKeys(bitarKey.PrivateKey)
                     .Send(receiver, amount)
