@@ -62,13 +62,10 @@ namespace Bitar.Repositories
                 return null;
             }
 
-            var btcAmount = Math.Round(isk / btcisk, 8, MidpointRounding.ToZero);
+            Money amount = Money.Satoshis(Math.Round(isk / btcisk, 8, MidpointRounding.ToZero));
             if (accountData.Balance >= isk)
             {
-
-                Money amount = new Money(btcAmount, MoneyUnit.Satoshi);
-
-                _logger.LogInformation($"{id} bought {btcAmount} Bitcoin for {isk} ISK with a rate of {btcisk}");
+                _logger.LogInformation($"{id} bought {amount} Bitcoin for {isk} ISK with a rate of {btcisk}");
 
                 using (var scope = _serviceProvider.CreateScope())
                 {
@@ -80,7 +77,7 @@ namespace Bitar.Repositories
             {
                 _logger.LogCritical($"Order cancelled.");
                 _logger.LogCritical($"{id} does not have sufficient balance for the order.");
-                _logger.LogCritical($"Order => {btcAmount} BTC for {isk} ISK.");
+                _logger.LogCritical($"Order => {amount} BTC for {isk} ISK.");
                 _logger.LogCritical($"Current balance: {accountData.Balance} ISK.");
                 return null;
             }
