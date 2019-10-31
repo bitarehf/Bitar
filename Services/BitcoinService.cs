@@ -101,6 +101,8 @@ namespace Bitar.Services
                     .SendEstimatedFees(rate.FeeRate)
                     .BuildTransaction(true);
 
+                _logger.LogDebug($"replace-by-transaction: {tx.RBF}");
+                _logger.LogDebug($"vsize: {tx.GetVirtualSize()}");
                 _logger.LogDebug(tx.ToString());
 
                 //return await _client.SendRawTransactionAsync(tx);
