@@ -103,7 +103,7 @@ namespace Bitar.Services
 
                 _logger.LogDebug($"replace-by-transaction: {tx.RBF}");
                 _logger.LogDebug($"vsize: {tx.GetVirtualSize()}");
-                _logger.LogDebug(tx.ToString());
+                _logger.LogDebug(tx.ToString(RawFormat.BlockExplorer, Network.Main));
 
                 //return await _client.SendRawTransactionAsync(tx);
 
