@@ -84,7 +84,7 @@ namespace Bitar.Services
                     return null;
                 }
 
-                var rate = await _client.EstimateSmartFeeAsync(8);
+                var rate = await _client.EstimateSmartFeeAsync(10);
                 _logger.LogDebug($"Estimated fee rate: {rate.FeeRate}");
 
                 var coinSelector = new DefaultCoinSelector
@@ -92,7 +92,9 @@ namespace Bitar.Services
                     GroupByScriptPubKey = false
                 };
 
-                var tx = Network.Main.CreateTransactionBuilder()
+                var builder = Network.Main.CreateTransactionBuilder();
+                builder.DustPrevention = false;
+                var tx = builder
                     .SetCoinSelector(new DefaultCoinSelector { GroupByScriptPubKey = false })
                     .AddCoins(coins)
                     .AddKeys(bitarKey.PrivateKey)
@@ -101,9 +103,11 @@ namespace Bitar.Services
                     .SendEstimatedFees(rate.FeeRate)
                     .BuildTransaction(true);
 
-                _logger.LogDebug($"replace-by-transaction: {tx.RBF}");
-                _logger.LogDebug($"vsize: {tx.GetVirtualSize()}");
-                _logger.LogDebug(tx.ToString(RawFormat.BlockExplorer, Network.Main));
+                _logger.LogDebug(
+                    $"vsize: {tx.GetVirtualSize()}\n" +
+                    $"{sender} sending {amount} btc to {receiver}" + 
+                    $"with {builder.EstimateFees(tx, rate.FeeRate)} fees\n" +
+                    $"{tx.ToString()}");
 
                 //return await _client.SendRawTransactionAsync(tx);
 
