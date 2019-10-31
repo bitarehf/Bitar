@@ -26,15 +26,28 @@ namespace Bitar.Controllers
             _market = market;
         }
 
-        // GET: api.bitar.is/Market/xxx??
+        // GET: api.bitar.is/Market/Boing
         [HttpGet]
         public async Task<ActionResult<uint256>> Boing()
         {
-            //string id = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier).Value;
-            var result = await _market.Buy("0411002650", 20000m);
+            var result = await _market.Order("0411002650", 20000m);
             if (result == null)
             {
-                return NotFound("Buying failed.");
+                return Conflict("Order failed.");
+            }
+
+            return result;
+        }
+
+        // POST: api.bitar.is/Market/Order
+        [HttpPost]
+        public async Task<ActionResult<uint256>> Order(decimal amount)
+        {
+            string id = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier).Value;
+            var result = await _market.Order(id, amount);
+            if (result == null)
+            {
+                return Conflict("Order failed.");
             }
 
             return result;
@@ -47,18 +60,5 @@ namespace Bitar.Controllers
         //     string id = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier).Value;
         //     return await _context.AccountData.FindAsync(id);
         // }
-
-        // POST: api.bitar.is/Market/Buy
-        /// <summary>
-        /// Buy bitcoin
-        /// </summary>
-        [HttpPost]
-        public async Task<ActionResult<string>> Buy(decimal isk)
-        {
-            string id = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier).Value;
-            var result = await _market.Buy(id, isk);
-
-            return result.ToString();
-        }
     }
 }

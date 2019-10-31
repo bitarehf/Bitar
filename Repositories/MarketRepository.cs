@@ -24,7 +24,7 @@ namespace Bitar.Repositories
             _context = context;
             _serviceProvider = serviceProvider;
         }
-        public async Task<uint256> Buy(string id, decimal isk)
+        public async Task<uint256> Order(string id, decimal isk)
         {
             var accountData = await _context.AccountData.FindAsync(id);
             if (accountData == null)
@@ -33,7 +33,7 @@ namespace Bitar.Repositories
                 return null;
             }
 
-            decimal btcisk = Decimal.Zero;
+            decimal rate = Decimal.Zero;
 
             using (var scope = _serviceProvider.CreateScope())
             {
@@ -45,7 +45,7 @@ namespace Bitar.Repositories
                     {
                         if (stock.Symbol == Symbol.BTC)
                         {
-                            btcisk = stock.Price;
+                            rate = stock.Price;
                         }
                     }
                 }
@@ -56,21 +56,40 @@ namespace Bitar.Repositories
                 }
             }
 
-            if (btcisk == Decimal.Zero)
+            if (rate == Decimal.Zero)
             {
-                _logger.LogCritical("Order cancelled because btcisk value was zero, this should never happen.");
+                _logger.LogCritical("Order cancelled because rate value was zero, this should never happen.");
                 return null;
             }
 
-            Money amount = Money.Coins(Math.Round(isk / btcisk, 8, MidpointRounding.ToZero));
+            Money coins = Money.Coins(Math.Round(isk / rate, 8, MidpointRounding.ToZero));
+            _logger.LogDebug($"Id: {id} Coins: {coins} ISK: {isk} Rate: {rate} Account Balance: {accountData.Balance}");
             if (accountData.Balance >= isk)
             {
-                _logger.LogWarning($"{id} bought {amount} Bitcoin for {isk} ISK at the rate of {btcisk}");
+                // var transaction = new Bitar.Models.MarketTransaction
+                // {
+                //     PersonalId = id,
+                //     Date = DateTime.Now,
+                //     Rate = rate,
+                //     Coins = coins,
+                //     Amount = isk,
+                // };
 
+                _logger.LogDebug($"{id} has sufficient balance for the order");
+                
+                accountData.Balance -= isk;
+                // if (accountData.Balance < Decimal.Zero)
+                // {
+                //     _logger.LogCritical($"Balance can't be negative. Id: {id}");
+                //     return null;
+                // }
+                await _context.SaveChangesAsync();
+
+                _logger.LogWarning($"{id} bought {coins} Bitcoin for {isk} ISK at the rate of {rate}");
                 using (var scope = _serviceProvider.CreateScope())
                 {
                     var _bitcoin = scope.ServiceProvider.GetRequiredService<BitcoinService>();
-                    return await _bitcoin.MakePayment(id, amount);
+                    return await _bitcoin.MakePayment(id, coins);
                 }
             }
             else
@@ -78,12 +97,10 @@ namespace Bitar.Repositories
                 _logger.LogCritical(
                     "Order cancelled.\n" +
                     $"{id} does not have sufficient balance for the order.\n" +
-                    $"Order => {amount} BTC for {isk} ISK.\n" +
+                    $"Order => {coins} BTC for {isk} ISK.\n" +
                     $"Current balance: {accountData.Balance} ISK.");
                 return null;
             }
-
-            return null;
         }
     }
 }
