@@ -70,11 +70,11 @@ namespace Bitar.Services
                 var unspentCoins = await _client.ListUnspentAsync(6, int.MaxValue, sender);
                 foreach (var coin in unspentCoins)
                 {
-                    _logger.LogDebug($@"
-                        Address: {coin.Address}
-                        Amount: {coin.Amount}
-                        Confirmations: {coin.Confirmations}
-                        OutPoint: {coin.OutPoint}");
+                    _logger.LogDebug(
+                        $"Address: {coin.Address}\n" +
+                        $"Amount: {coin.Amount}\n" +
+                        $"Confirmations: {coin.Confirmations}\n" +
+                        $"OutPoint: {coin.OutPoint}");
                 }
 
                 var coins = unspentCoins.Select(c => c.AsCoin()).ToArray();

@@ -252,8 +252,8 @@ namespace Bitar.Services
                 HttpWebResponse response = (HttpWebResponse)request.GetResponse();
                 if (response.StatusCode != HttpStatusCode.OK)
                 {
-                    Console.WriteLine("response StatusCode: " + response.StatusCode);
-                    Console.WriteLine("response StatusDescription: " + response.StatusDescription);
+                    _logger.LogDebug($"response StatuseCode: {response.StatusCode}");
+                    _logger.LogDebug($"response StatusDescription: {response.StatusDescription}");
                 }
                 //doc.Save("request.xml");
 

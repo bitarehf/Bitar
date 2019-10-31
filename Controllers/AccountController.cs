@@ -114,10 +114,10 @@ namespace Bitar.Controllers
                 Email = register.Email
             };
 
-            _logger.LogDebug($@"
-                Id: {register.Id}
-                Email: {register.Email}
-                Password: {register.Password}");
+            _logger.LogDebug(
+                $"Id: {register.Id}\n" +
+                $"Email: {register.Email}\n" +
+                $"Password: {register.Password}");
 
             var result = await _userManager.CreateAsync(user, register.Password);
 
