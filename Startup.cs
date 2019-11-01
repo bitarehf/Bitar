@@ -71,6 +71,7 @@ namespace Bitar
                     options.SaveToken = true;
                     options.TokenValidationParameters = new TokenValidationParameters
                     {
+                        ValidateIssuerSigningKey = true,                     
                         ValidIssuer = "https://bitar.is",
                         ValidAudience = "https://bitar.is",
                         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration.GetSection("JwtSettings:JwtKey").Value)),
