@@ -107,7 +107,7 @@ namespace Bitar.Repositories
             }
             catch (DbUpdateConcurrencyException)
             {
-                _logger.LogError($"DbUpdateConcurrencyException: {isk} ISK order cancelled.");
+                _logger.LogError($"DbUpdateConcurrencyException: {id} {isk} ISK order cancelled.");
             }
 
             return null;
