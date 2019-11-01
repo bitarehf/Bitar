@@ -108,12 +108,12 @@ namespace Bitar.Services
                         await context.SaveChangesAsync();
                     }
                     else if (!accountData.Transactions.Any(x =>
-                            x.PersonalId == transaction.PersonalId &&
-                            x.Date == transaction.Date &&
-                            x.Reference == transaction.Reference &&
-                            x.ShortReference == transaction.ShortReference &&
-                            x.PaymentDetail == transaction.PaymentDetail &&
-                            x.Amount == transaction.Amount))
+                        x.PersonalId == transaction.PersonalId &&
+                        x.Date == transaction.Date &&
+                        x.Reference == transaction.Reference &&
+                        x.ShortReference == transaction.ShortReference &&
+                        x.PaymentDetail == transaction.PaymentDetail &&
+                        x.Amount == transaction.Amount))
                     {
                         _logger.LogCritical($"Found a new transaction from {transaction.PersonalId}");
                         accountData.Transactions.Add(transaction);
