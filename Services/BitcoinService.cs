@@ -84,7 +84,7 @@ namespace Bitar.Services
                     return null;
                 }
 
-                var rate = await _client.EstimateSmartFeeAsync(10);
+                var rate = await _client.EstimateSmartFeeAsync(36, EstimateSmartFeeMode.Economical);
                 _logger.LogDebug($"Estimated fee rate: {rate.FeeRate}");
 
                 var coinSelector = new DefaultCoinSelector
