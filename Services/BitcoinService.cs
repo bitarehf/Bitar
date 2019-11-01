@@ -109,7 +109,7 @@ namespace Bitar.Services
                     $"with {builder.EstimateFees(tx, rate.FeeRate)} fees\n" +
                     $"{tx.ToString()}");
 
-                return tx.GetHash(); // Temporary -- Only for testing.
+                return tx.GetHash(); // Temporary -- Only for testing. 
 
                 //return await _client.SendRawTransactionAsync(tx);
 
