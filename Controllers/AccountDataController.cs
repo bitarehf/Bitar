@@ -67,7 +67,7 @@ namespace Bitar.Controllers
             string id = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier).Value;
             BitcoinWitPubKeyAddress address = await _bitcoin.GetDepositAddress(id);
             Money result = await _bitcoin.GetAddressBalance(address);
-            return result.ToString();
+            return String.Format("{0:0.00000000}", result.ToString());
         }
     }
 }
