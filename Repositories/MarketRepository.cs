@@ -14,7 +14,6 @@ namespace Bitar.Repositories
     {
         private readonly ILogger _logger;
         private readonly ApplicationDbContext _context;
-        private readonly BitcoinService _bitcoin;
         private readonly IServiceProvider _serviceProvider;
         public MarketRepository(
             ILogger<MarketRepository> logger,
