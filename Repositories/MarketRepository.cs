@@ -29,7 +29,10 @@ namespace Bitar.Repositories
         {
             try
             {
-                var accountData = await _context.AccountData.FindAsync(id);
+                var accountData = await _context.AccountData
+                    .Include(x => x.MarketTransactions)
+                    .FirstOrDefaultAsync(x => x.Id == id);
+
                 if (accountData == null)
                 {
                     _logger.LogCritical($"Order cancelled because no account with id: {id} was found");
@@ -70,7 +73,7 @@ namespace Bitar.Repositories
                 if (accountData.Balance >= isk)
                 {
                     _logger.LogDebug($"{id} has sufficient balance for the order");
-                    
+
                     var transaction = new MarketTransaction
                     {
                         PersonalId = id,
