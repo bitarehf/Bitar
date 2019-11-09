@@ -21,8 +21,12 @@ namespace Bitar.Models
         [Range(0, int.MaxValue)]
         [ConcurrencyCheck]
         public decimal Balance { get; set; }
+
         [ConcurrencyCheck]
         [ForeignKey("PersonalId")]
         public virtual List<Transaction> Transactions { get; set; }
+        [ConcurrencyCheck]
+        [ForeignKey("PersonalId")]
+        public virtual List<MarketTransaction> MarketTransactions { get; set; }
     }
 }

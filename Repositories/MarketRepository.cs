@@ -69,26 +69,22 @@ namespace Bitar.Repositories
                 _logger.LogDebug($"Id: {id} Coins: {coins} ISK: {isk} Rate: {rate} Account Balance: {accountData.Balance}");
                 if (accountData.Balance >= isk)
                 {
-                    // var transaction = new Bitar.Models.MarketTransaction
-                    // {
-                    //     PersonalId = id,
-                    //     Date = DateTime.Now,
-                    //     Rate = rate,
-                    //     Coins = coins,
-                    //     Amount = isk,
-                    // };
-
                     _logger.LogDebug($"{id} has sufficient balance for the order");
+                    
+                    var transaction = new MarketTransaction
+                    {
+                        PersonalId = id,
+                        Date = DateTime.Now,
+                        Rate = rate,
+                        Coins = coins.ToDecimal(MoneyUnit.BTC),
+                        Amount = isk
+                    };
 
                     accountData.Balance -= isk;
-                    // if (accountData.Balance < Decimal.Zero)
-                    // {
-                    //     _logger.LogCritical($"Balance can't be negative. Id: {id}");
-                    //     return null;
-                    // }
+                    accountData.MarketTransactions.Add(transaction);
                     await _context.SaveChangesAsync();
 
-                    _logger.LogWarning($"{id} bought {coins} Bitcoin for {isk} ISK at the rate of {rate}");
+                    _logger.LogWarning($"{id} bought {coins} BTC for {isk} ISK with a rate of: {rate}");
                     using (var scope = _serviceProvider.CreateScope())
                     {
                         var _bitcoin = scope.ServiceProvider.GetRequiredService<BitcoinService>();

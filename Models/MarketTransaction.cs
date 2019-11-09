@@ -21,7 +21,7 @@ namespace Bitar.Models
         public decimal Rate { get; set; }
         
         [Required]
-        public Money Coins { get; set; }
+        public decimal Coins { get; set; }
 
         [Required]
         public decimal Amount { get; set; }
