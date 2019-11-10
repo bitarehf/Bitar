@@ -34,7 +34,10 @@ namespace Bitar.Controllers
         public async Task<AccountData> GetAccountData()
         {
             string id = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier).Value;
-            return await _context.AccountData.FindAsync(id);
+            return await _context.AccountData
+                .Include(x => x.MarketTransactions)
+                .Include(x => x.Transactions)
+                .FirstOrDefaultAsync(x => x.Id == id);
         }
 
 
