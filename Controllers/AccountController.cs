@@ -171,7 +171,7 @@ namespace Bitar.Controllers
         [HttpGet]
         public ActionResult<string> Protected()
         {
-            _logger.LogCritical($"{HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value} accessed the protected area");
+            _logger.LogCritical($"{User.FindFirstValue(ClaimTypes.NameIdentifier)} accessed the protected area");
             return "Protected area";
         }
 

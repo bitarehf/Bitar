@@ -31,9 +31,14 @@ namespace Bitar.Controllers
 
         // GET: api.bitar.is/AccountData/GetAccountData
         [HttpGet]
-        public async Task<AccountData> GetAccountData()
+        public async Task<ActionResult<AccountData>> GetAccountData()
         {
-            string id = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier).Value;
+            string id = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (id == null)
+            {
+                return NotFound("User not found");
+            }
+
             return await _context.AccountData
                 .Include(x => x.MarketTransactions)
                 .Include(x => x.Transactions)
@@ -46,8 +51,14 @@ namespace Bitar.Controllers
         /// Updates Account WithdrawalAddress
         /// </summary>
         [HttpPost]
-        public async Task<ActionResult<BitcoinAddress>> UpdateWithdrawalAddress(string id, BitcoinAddress bitcoinAddress)
+        public async Task<ActionResult<BitcoinAddress>> UpdateWithdrawalAddress(BitcoinAddress bitcoinAddress)
         {
+            string id = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (id == null)
+            {
+                return NotFound("User not found");
+            }
+
             var accountData = await _context.AccountData.FindAsync(id);
             accountData.WithdrawalAddress = bitcoinAddress.ToString();
 
@@ -59,7 +70,12 @@ namespace Bitar.Controllers
         [HttpGet]
         public async Task<ActionResult<string>> GetDepositAddress()
         {
-            string id = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier).Value;
+            string id = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (id == null)
+            {
+                return NotFound("User not found");
+            }
+
             BitcoinWitPubKeyAddress address = await _bitcoin.GetDepositAddress(id);
             return address.ToString();
         }
@@ -67,7 +83,12 @@ namespace Bitar.Controllers
         [HttpGet]
         public async Task<ActionResult<decimal>> GetAddressBalance()
         {
-            string id = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier).Value;
+            string id = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (id == null)
+            {
+                return NotFound("User not found");
+            }
+            
             BitcoinWitPubKeyAddress address = await _bitcoin.GetDepositAddress(id);
             Money result = await _bitcoin.GetAddressBalance(address);
             return result.ToDecimal(MoneyUnit.BTC);
