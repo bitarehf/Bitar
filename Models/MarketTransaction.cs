@@ -30,6 +30,9 @@ namespace Bitar.Models
         public decimal Amount { get; set; }
 
         [Required]
+        public string TxId { get; set; }
+
+        [Required]
         public TransactionStatus Status { get; set; }
     }
 
@@ -37,6 +40,7 @@ namespace Bitar.Models
     {
         Completed,
         Pending,
-        Rejected
+        Rejected,
+        Failed
     }
 }
