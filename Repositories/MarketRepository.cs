@@ -92,25 +92,44 @@ namespace Bitar.Repositories
                 {
                     _logger.LogDebug($"{id} has sufficient balance for the order");
 
-                    accountData.Balance -= isk;
-                    mtx.Status = TransactionStatus.Completed;
-                    accountData.MarketTransactions.Add(mtx);
-                    await _context.SaveChangesAsync();
-
-                    _logger.LogWarning(
-                        "Market Transaction.\n" +
-                        $"Id: {mtx.Id}\n" +
-                        $"Date: {mtx.Date}\n" +
-                        $"Rate: {mtx.Rate}\n" +
-                        $"Coins: {mtx.Coins}\n" +
-                        $"Fee: {mtx.Fee}\n" +
-                        $"Amount: {mtx.Amount}\n" +
-                        $"Status: {mtx.Status}");
-
                     using (var scope = _serviceProvider.CreateScope())
                     {
                         var _bitcoin = scope.ServiceProvider.GetRequiredService<BitcoinService>();
-                        return await _bitcoin.MakePayment(id, coins);
+                        if (await _bitcoin.CanMakePayment(id, coins))
+                        {
+                            accountData.Balance -= isk;
+                            await _context.SaveChangesAsync();
+
+                            _logger.LogWarning(
+                                "Market Transaction.\n" +
+                                $"Id: {mtx.Id}\n" +
+                                $"Date: {mtx.Date}\n" +
+                                $"Rate: {mtx.Rate}\n" +
+                                $"Coins: {mtx.Coins}\n" +
+                                $"Fee: {mtx.Fee}\n" +
+                                $"Amount: {mtx.Amount}\n" +
+                                $"Status: {mtx.Status}");
+
+                            var result = await _bitcoin.MakePayment(id, coins);
+                            mtx.TxId = result.ToString();
+
+                            if (result != null)
+                            {
+                                mtx.Status = TransactionStatus.Completed;
+                            }
+                            else
+                            {
+                                // The bitcoin transaction failed.
+                                // Should we refund the user right away?
+                                // accountData.Balance += isk;
+                                mtx.Status = TransactionStatus.Failed;
+                            }
+
+                            accountData.MarketTransactions.Add(mtx);
+                            await _context.SaveChangesAsync();
+                            return result;
+                        }
+
                     }
                 }
                 else
