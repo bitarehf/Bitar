@@ -26,6 +26,13 @@ namespace Bitar.Repositories
         }
         public async Task<uint256> Order(string id, decimal isk)
         {
+            MarketTransaction mtx = new MarketTransaction
+            {
+                PersonalId = id,
+                Date = DateTime.Now,
+                Amount = isk,
+            };
+
             try
             {
                 var accountData = await _context.AccountData
@@ -37,6 +44,8 @@ namespace Bitar.Repositories
                     _logger.LogCritical($"Order cancelled because no account with id: {id} was found");
                     return null;
                 }
+
+                mtx.Fee = accountData.Fee;
 
                 decimal rate = Decimal.Zero;
 
@@ -57,28 +66,27 @@ namespace Bitar.Repositories
                     else
                     {
                         _logger.LogCritical("Order cancelled because market is closed.");
+                        mtx.Status = TransactionStatus.Rejected;
+                        accountData.MarketTransactions.Add(mtx);
+                        await _context.SaveChangesAsync();
                         return null;
                     }
                 }
 
+                mtx.Rate = rate;
+
                 if (rate == Decimal.Zero)
                 {
                     _logger.LogCritical("Order cancelled because rate value was zero, this should never happen.");
+                    mtx.Status = TransactionStatus.Rejected;
+                    accountData.MarketTransactions.Add(mtx);
+                    await _context.SaveChangesAsync();
                     return null;
                 }
 
                 Money coins = Money.Coins(Math.Round(isk * (1 - accountData.Fee) / rate, 8, MidpointRounding.ToZero));
+                mtx.Coins = coins.ToDecimal(MoneyUnit.BTC);
                 _logger.LogDebug($"Id: {id} Coins: {coins} ISK: {isk} Rate: {rate} Account Balance: {accountData.Balance}");
-
-                var mtx = new MarketTransaction
-                {
-                    PersonalId = id,
-                    Date = DateTime.Now,
-                    Rate = rate,
-                    Coins = coins.ToDecimal(MoneyUnit.BTC),
-                    Fee = accountData.Fee,
-                    Amount = isk,
-                };
 
                 if (accountData.Balance >= isk)
                 {
@@ -114,6 +122,7 @@ namespace Bitar.Repositories
                         $"Current balance: {accountData.Balance} ISK.");
 
                     mtx.Status = TransactionStatus.Rejected;
+                    accountData.MarketTransactions.Add(mtx);
                     await _context.SaveChangesAsync();
                     return null;
                 }
@@ -123,7 +132,6 @@ namespace Bitar.Repositories
                 _logger.LogError($"DbUpdateConcurrencyException: {id} {isk} ISK order cancelled.");
             }
 
-            
             return null;
         }
     }
