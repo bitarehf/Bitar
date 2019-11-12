@@ -17,6 +17,10 @@ namespace Bitar.Models
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Derivation { get; set; }
 
+        [DefaultValue(0.5)]
+        [Range(0, 10)]
+        public decimal Fee { get; set; }
+
         [DefaultValue(0)]
         [Range(0, int.MaxValue)]
         [ConcurrencyCheck]

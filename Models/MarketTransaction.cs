@@ -19,11 +19,24 @@ namespace Bitar.Models
 
         [Required]
         public decimal Rate { get; set; }
-        
+
         [Required]
         public decimal Coins { get; set; }
 
         [Required]
+        public decimal Fee { get; set; }
+
+        [Required]
         public decimal Amount { get; set; }
+
+        [Required]
+        public TransactionStatus Status { get; set; }
+    }
+
+    public enum TransactionStatus
+    {
+        Completed,
+        Pending,
+        Rejected
     }
 }

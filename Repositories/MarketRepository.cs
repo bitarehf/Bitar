@@ -67,26 +67,38 @@ namespace Bitar.Repositories
                     return null;
                 }
 
-                Money coins = Money.Coins(Math.Round(isk / rate, 8, MidpointRounding.ToZero));
+                Money coins = Money.Coins(Math.Round(isk * (1 - accountData.Fee) / rate, 8, MidpointRounding.ToZero));
                 _logger.LogDebug($"Id: {id} Coins: {coins} ISK: {isk} Rate: {rate} Account Balance: {accountData.Balance}");
+
+                var mtx = new MarketTransaction
+                {
+                    PersonalId = id,
+                    Date = DateTime.Now,
+                    Rate = rate,
+                    Coins = coins.ToDecimal(MoneyUnit.BTC),
+                    Fee = accountData.Fee,
+                    Amount = isk,
+                };
+
                 if (accountData.Balance >= isk)
                 {
                     _logger.LogDebug($"{id} has sufficient balance for the order");
 
-                    var transaction = new MarketTransaction
-                    {
-                        PersonalId = id,
-                        Date = DateTime.Now,
-                        Rate = rate,
-                        Coins = coins.ToDecimal(MoneyUnit.BTC),
-                        Amount = isk
-                    };
-
                     accountData.Balance -= isk;
-                    accountData.MarketTransactions.Add(transaction);
+                    mtx.Status = TransactionStatus.Completed;
+                    accountData.MarketTransactions.Add(mtx);
                     await _context.SaveChangesAsync();
 
-                    _logger.LogWarning($"{id} bought {coins} BTC for {isk} ISK with a rate of: {rate}");
+                    _logger.LogWarning(
+                        "Market Transaction.\n" +
+                        $"Id: {mtx.Id}\n" +
+                        $"Date: {mtx.Date}\n" +
+                        $"Rate: {mtx.Rate}\n" +
+                        $"Coins: {mtx.Coins}\n" +
+                        $"Fee: {mtx.Fee}\n" +
+                        $"Amount: {mtx.Amount}\n" +
+                        $"Status: {mtx.Status}");
+
                     using (var scope = _serviceProvider.CreateScope())
                     {
                         var _bitcoin = scope.ServiceProvider.GetRequiredService<BitcoinService>();
@@ -100,6 +112,9 @@ namespace Bitar.Repositories
                         $"{id} does not have sufficient balance for the order.\n" +
                         $"Order => {coins} BTC for {isk} ISK.\n" +
                         $"Current balance: {accountData.Balance} ISK.");
+
+                    mtx.Status = TransactionStatus.Rejected;
+                    await _context.SaveChangesAsync();
                     return null;
                 }
             }
@@ -108,6 +123,7 @@ namespace Bitar.Repositories
                 _logger.LogError($"DbUpdateConcurrencyException: {id} {isk} ISK order cancelled.");
             }
 
+            
             return null;
         }
     }
