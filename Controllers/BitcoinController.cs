@@ -50,9 +50,14 @@ namespace Bitar.Controllers
             }
 
             var accountData = await _context.AccountData.FindAsync(id);
-            if (id == null)
+            if (accountData == null)
             {
                 return NotFound("User not found in database");
+            }
+
+            if (accountData.WithdrawalAddress == null)
+            {
+                return NotFound("User has not set a withdrawal address");
             }
 
             var address = BitcoinAddress.Create(accountData.WithdrawalAddress, Network.Main);
