@@ -57,78 +57,13 @@ namespace Bitar.Services
         /// <returns>Transaction (uint256) or null.</returns>
         public async Task<uint256> MakePayment(string id, Money amount)
         {
-            try
-            {
-                var accountData = await GetAccountData(id);
 
-                ExtKey bitarKey = _masterKey.Derive(new KeyPath($"m/84'/0'/0'/0/0"));
-                var sender = bitarKey.PrivateKey.PubKey.GetSegwitAddress(Network.Main);
+            var accountData = await GetAccountData(id);
 
-                ExtKey key = _masterKey.Derive(new KeyPath($"m/84'/0'/{accountData.Derivation}'/0/0"));
-                var receiver = key.PrivateKey.PubKey.GetSegwitAddress(Network.Main);
+            ExtKey key = _masterKey.Derive(new KeyPath($"m/84'/0'/{accountData.Derivation}'/0/0"));
+            var receiver = key.PrivateKey.PubKey.GetSegwitAddress(Network.Main);
 
-                var unspentCoins = await _client.ListUnspentAsync(6, int.MaxValue, sender);
-                foreach (var coin in unspentCoins)
-                {
-                    _logger.LogDebug(
-                        $"Address: {coin.Address}\n" +
-                        $"Amount: {coin.Amount}\n" +
-                        $"Confirmations: {coin.Confirmations}\n" +
-                        $"OutPoint: {coin.OutPoint}");
-                }
-
-                var coins = unspentCoins.Select(c => c.AsCoin()).ToArray();
-                if (coins.Select(c => c.Amount).Sum() < amount)
-                {
-                    _logger.LogCritical("Not enough funds.");
-                    return null;
-                }
-
-                var rate = await _client.EstimateSmartFeeAsync(36, EstimateSmartFeeMode.Economical);
-                _logger.LogDebug($"Estimated fee rate: {rate.FeeRate}");
-
-                var coinSelector = new DefaultCoinSelector
-                {
-                    GroupByScriptPubKey = false
-                };
-
-                var builder = Network.Main.CreateTransactionBuilder();
-                builder.DustPrevention = false;
-                var tx = builder
-                    .SetCoinSelector(new DefaultCoinSelector { GroupByScriptPubKey = false })
-                    .AddCoins(coins)
-                    .AddKeys(bitarKey.PrivateKey)
-                    .Send(receiver, amount)
-                    .SetChange(sender)
-                    .SendEstimatedFees(rate.FeeRate)
-                    .BuildTransaction(true);
-
-                _logger.LogDebug(
-                    $"vsize: {tx.GetVirtualSize()}\n" +
-                    $"{sender} sending {amount} btc to {receiver}" +
-                    $"with {builder.EstimateFees(tx, rate.FeeRate)} fees\n" +
-                    $"{tx.ToString()}");
-
-                _logger.LogDebug($"TransactionCheckResult: {tx.Check()}");
-
-                if (tx.Check() == TransactionCheckResult.Success)
-                {
-                    var txId = tx.GetHash();
-                    _logger.LogCritical($"TxId: {txId}");
-                    return txId; // Temporary -- Only for testing. 
-                    // return await _client.SendRawTransactionAsync(tx);
-                }
-                else
-                {
-                    return null;
-                }
-            }
-            catch (Exception e)
-            {
-                _logger.LogError(e.ToString());
-            }
-
-            return null;
+            return await SendBitcoin(id, receiver, amount, 36);
         }
 
         /// <summary>
@@ -255,30 +190,72 @@ namespace Bitar.Services
         /// Change address is the same as the sender address.
         /// </summary>
         /// <param name="id">Id of the sender.</param>
-        /// <param name="receiverAddress">Bitcoin address to send the money to.</param>
+        /// <param name="receiver">Bitcoin address to send the money to.</param>
         /// <param name="money">Amount of bitcoin to send.</param>
-        /// <returns>Transaction or null.</returns>
-        public async Task<uint256> SendBitcoin(string id, BitcoinAddress receiverAddress, Money amount)
+        /// <param name="fees">Amount of fees to be included in the transaction.</param>
+        /// <remarks>
+        /// Change address is the same as the sender address.
+        /// </remarks>
+        public async Task<uint256> SendBitcoin(string id, BitcoinAddress receiver, Money amount, Money fees)
         {
             try
             {
                 var accountData = await GetAccountData(id);
 
                 ExtKey key = _masterKey.Derive(new KeyPath($"m/84'/0'/{accountData.Derivation}'/0/0"));
-                var senderAddress = key.PrivateKey.PubKey.GetSegwitAddress(Network.Main);
-                var unspentCoins = await _client.ListUnspentAsync(6, 99999999, senderAddress);
-                var estimateFeeRate = await _client.EstimateSmartFeeAsync(8);
+                var sender = key.PrivateKey.PubKey.GetSegwitAddress(Network.Main);
+                var unspentCoins = await _client.ListUnspentAsync(6, int.MaxValue, sender);
+                foreach (var coin in unspentCoins)
+                {
+                    _logger.LogDebug(
+                        $"Address: {coin.Address}\n" +
+                        $"Amount: {coin.Amount}\n" +
+                        $"Confirmations: {coin.Confirmations}\n" +
+                        $"OutPoint: {coin.OutPoint}");
+                }
 
-                var tx = Network.Main.CreateTransactionBuilder()
-                    .AddCoins(unspentCoins.Select(c => c.AsCoin()))
-                    .AddKeys(key)
-                    .Send(receiverAddress, amount)
-                    .SendEstimatedFees(estimateFeeRate.FeeRate)
-                    .SetChange(senderAddress)
+                var coins = unspentCoins.Select(c => c.AsCoin()).ToArray();
+                if (coins.Select(c => c.Amount).Sum() < amount)
+                {
+                    _logger.LogDebug("Use does not have enough funds.");
+                    return null;
+                }
+
+                var coinSelector = new DefaultCoinSelector
+                {
+                    GroupByScriptPubKey = false
+                };
+
+                var builder = Network.Main.CreateTransactionBuilder();
+                builder.DustPrevention = false;
+                var tx = builder
+                    .SetCoinSelector(new DefaultCoinSelector { GroupByScriptPubKey = false })
+                    .AddCoins(coins)
+                    .AddKeys(key.PrivateKey)
+                    .Send(receiver, amount)
+                    .SetChange(sender)
+                    .SendFees(fees)
                     .BuildTransaction(true);
 
-                //return await _client.SendRawTransactionAsync(tx);
+                _logger.LogDebug(
+                    $"vsize: {tx.GetVirtualSize()}\n" +
+                    $"{sender} sending {amount} btc to {receiver}" +
+                    $"with {fees} fees\n" +
+                    $"{tx.ToString()}");
 
+                _logger.LogDebug($"TransactionCheckResult: {tx.Check()}");
+
+                if (tx.Check() == TransactionCheckResult.Success)
+                {
+                    var txId = tx.GetHash();
+                    _logger.LogCritical($"TxId: {txId}");
+                    return txId; // Temporary -- Only for testing. 
+                    // return await _client.SendRawTransactionAsync(tx);
+                }
+                else
+                {
+                    return null;
+                }
             }
             catch (Exception e)
             {
@@ -286,6 +263,156 @@ namespace Bitar.Services
             }
 
             return null;
+        }
+
+        /// <summary>
+        /// Sends specified amount of bitcoin to an address.
+        /// Change address is the same as the sender address.
+        /// </summary>
+        /// <param name="id">Id of the sender.</param>
+        /// <param name="receiver">Bitcoin address to send the money to.</param>
+        /// <param name="money">Amount of bitcoin to send.</param>
+        /// <param name="fees">Amount of fees to be included in the transaction.</param>
+        /// <remarks>
+        /// Change address is the same as the sender address.
+        /// </remarks>
+        public async Task<uint256> SendBitcoin(string id, BitcoinAddress receiver, Money amount, int blocks)
+        {
+            try
+            {
+                var accountData = await GetAccountData(id);
+
+                var rate = await _client.EstimateSmartFeeAsync(blocks, EstimateSmartFeeMode.Economical);
+                _logger.LogDebug($"Estimated fee rate: {rate.FeeRate}");
+
+                ExtKey key = _masterKey.Derive(new KeyPath($"m/84'/0'/{accountData.Derivation}'/0/0"));
+                var sender = key.PrivateKey.PubKey.GetSegwitAddress(Network.Main);
+                var unspentCoins = await _client.ListUnspentAsync(6, int.MaxValue, sender);
+                foreach (var coin in unspentCoins)
+                {
+                    _logger.LogDebug(
+                        $"Address: {coin.Address}\n" +
+                        $"Amount: {coin.Amount}\n" +
+                        $"Confirmations: {coin.Confirmations}\n" +
+                        $"OutPoint: {coin.OutPoint}");
+                }
+
+                var coins = unspentCoins.Select(c => c.AsCoin()).ToArray();
+                if (coins.Select(c => c.Amount).Sum() < amount)
+                {
+                    _logger.LogDebug("Use does not have enough funds.");
+                    return null;
+                }
+
+                var coinSelector = new DefaultCoinSelector
+                {
+                    GroupByScriptPubKey = false
+                };
+
+                var builder = Network.Main.CreateTransactionBuilder();
+                builder.DustPrevention = false;
+                var tx = builder
+                    .SetCoinSelector(new DefaultCoinSelector { GroupByScriptPubKey = false })
+                    .AddCoins(coins)
+                    .AddKeys(key.PrivateKey)
+                    .Send(receiver, amount)
+                    .SetChange(sender)
+                    .SendEstimatedFees(rate.FeeRate)
+                    .BuildTransaction(true);
+
+                var fees = rate.FeeRate.GetFee(tx);
+
+                _logger.LogDebug(
+                    $"vsize: {tx.GetVirtualSize()}\n" +
+                    $"{sender} sending {amount} btc to {receiver}" +
+                    $"with {fees} fees\n" +
+                    $"{tx.ToString()}");
+
+                _logger.LogDebug($"TransactionCheckResult: {tx.Check()}");
+
+                if (tx.Check() == TransactionCheckResult.Success)
+                {
+                    var txId = tx.GetHash();
+
+                    _logger.LogCritical($"TxId: {txId}");
+                    return txId; // Temporary -- Only for testing. 
+                    // return await _client.SendRawTransactionAsync(tx);
+                }
+                else
+                {
+                    return null;
+                }
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e.ToString());
+            }
+
+            return null;
+        }
+
+        public async Task<Money> CalculateFees(string id, BitcoinAddress receiver, Money amount, int blocks)
+        {
+            try
+            {
+                var accountData = await GetAccountData(id);
+
+                var rate = await EstimateSmartFee(blocks);
+                _logger.LogDebug($"Estimated fee rate: {rate}");
+
+                ExtKey key = _masterKey.Derive(new KeyPath($"m/84'/0'/{accountData.Derivation}'/0/0"));
+                var sender = key.PrivateKey.PubKey.GetSegwitAddress(Network.Main);
+                var unspentCoins = await _client.ListUnspentAsync(6, int.MaxValue, sender);
+
+                var coins = unspentCoins.Select(c => c.AsCoin()).ToArray();
+                if (coins.Select(c => c.Amount).Sum() < amount)
+                {
+                    _logger.LogDebug("Use does not have enough funds.");
+                    return null;
+                }
+
+                var coinSelector = new DefaultCoinSelector
+                {
+                    GroupByScriptPubKey = false
+                };
+
+                var builder = Network.Main.CreateTransactionBuilder();
+                builder.DustPrevention = false;
+                var tx = builder
+                    .SetCoinSelector(new DefaultCoinSelector { GroupByScriptPubKey = false })
+                    .AddCoins(coins)
+                    .AddKeys(key.PrivateKey)
+                    .Send(receiver, amount)
+                    .SetChange(sender)
+                    .SendEstimatedFees(rate)
+                    .BuildTransaction(true);
+
+                var fees = rate.GetFee(tx);
+
+                _logger.LogDebug($"Transaction Fees: {fees}");
+                _logger.LogDebug($"TransactionCheckResult: {tx.Check()}");
+
+                if (tx.Check() == TransactionCheckResult.Success)
+                {
+                    return fees;
+                }
+                else
+                {
+                    return null;
+                }
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e.ToString());
+            }
+
+            return null;
+        }
+
+        public async Task<Money> GetTransactionFees(int virtualSize, int blocks)
+        {
+            var rate = await EstimateSmartFee(blocks);
+            return rate.GetFee(virtualSize);
         }
 
         public async Task<Money> GetAddressBalance(BitcoinAddress address)
@@ -304,6 +431,16 @@ namespace Bitar.Services
             }
 
             return total;
+        }
+
+        /// <summary>
+        /// Estimate the optimal amount of fees for the specified amount of blocks.
+        /// </summary>
+        /// <param name="blocks">Amount of blocks to estimate from.</param>
+        public async Task<FeeRate> EstimateSmartFee(int blocks)
+        {
+            var result = await _client.EstimateSmartFeeAsync(blocks, EstimateSmartFeeMode.Economical);
+            return result.FeeRate;
         }
     }
 }
