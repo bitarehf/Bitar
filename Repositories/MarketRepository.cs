@@ -30,7 +30,7 @@ namespace Bitar.Repositories
             {
                 PersonalId = id,
                 Date = DateTime.Now,
-                Amount = isk,
+                Amount = -isk
             };
 
             try
@@ -90,6 +90,7 @@ namespace Bitar.Repositories
 
                 if (accountData.Balance >= isk)
                 {
+                    mtx.Balance = accountData.Balance - isk;
                     _logger.LogDebug($"{id} has sufficient balance for the order");
 
                     using (var scope = _serviceProvider.CreateScope())
@@ -111,10 +112,10 @@ namespace Bitar.Repositories
                                 $"Status: {mtx.Status}");
 
                             var result = await _bitcoin.MakePayment(id, coins);
-                            mtx.TxId = result.ToString();
-
+                            
                             if (result != null)
                             {
+                                mtx.TxId = result.ToString();
                                 mtx.Status = TransactionStatus.Completed;
                             }
                             else
