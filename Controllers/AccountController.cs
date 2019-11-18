@@ -146,7 +146,8 @@ namespace Bitar.Controllers
 
                 var accountData = new AccountData
                 {
-                    Id = id
+                    Id = id,
+                    Fee = 0.5m
                     // Derivation is automatically assigned an id.
                 };
                 await _context.AccountData.AddAsync(accountData);
