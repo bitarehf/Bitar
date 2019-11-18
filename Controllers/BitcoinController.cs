@@ -49,7 +49,9 @@ namespace Bitar.Controllers
                 return NotFound("User not found");
             }
 
-            var accountData = await _context.AccountData.FindAsync(id);
+            var accountData = await _context.AccountData
+                    .Include(x => x.MarketTransactions)
+                    .FirstOrDefaultAsync(x => x.Id == id);
             if (accountData == null)
             {
                 return NotFound("User not found in database");
@@ -64,11 +66,24 @@ namespace Bitar.Controllers
             Money amount = Money.FromUnit(withdrawal.Amount, MoneyUnit.BTC);
             Money fees = Money.FromUnit(withdrawal.Fees, MoneyUnit.BTC);
 
+
             var result = await _bitcoin.SendBitcoin(id, address, amount, fees);
             if (result == null)
             {
                 return Conflict("Failed to create/send transaction");
             }
+
+            MarketTransaction mtx = new MarketTransaction
+            {
+                PersonalId = id,
+                Date = DateTime.Now,
+                Coins = -(withdrawal.Amount + withdrawal.Fees),
+                TxId = result.ToString(),
+                Status = TransactionStatus.Completed
+            };
+
+            accountData.MarketTransactions.Add(mtx);
+            await _context.SaveChangesAsync();
 
             return result.ToString();
         }

@@ -16,21 +16,12 @@ namespace Bitar.Models
 
         [Required]
         public DateTime Date { get; set; }
-
-        [Required]
         public decimal Rate { get; set; }
-
-        [Required]
         public decimal Coins { get; set; }
-
-        [Required]
         public decimal Fee { get; set; }
-
-        [Required]
         public decimal Amount { get; set; }
-
-        [Required]
         public string TxId { get; set; }
+        public decimal Balance { get; set; }
 
         [Required]
         public TransactionStatus Status { get; set; }
