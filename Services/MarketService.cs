@@ -84,7 +84,7 @@ namespace Bitar.Services
                 foreach (var transaction in transactions)
                 {
                     _logger.LogDebug(
-                        $"Date: {transaction.Date}\n" +
+                        $"Time: {transaction.Time}\n" +
                         $"PersonalId: {transaction.PersonalId}\n" +
                         $"skyring_tilvisunar: {transaction.Reference}\n" +
                         $"tekka_sedilnr: {transaction.ShortReference}\n" +
@@ -109,7 +109,7 @@ namespace Bitar.Services
                     }
                     else if (!accountData.Transactions.Any(x =>
                         x.PersonalId == transaction.PersonalId &&
-                        x.Date == transaction.Date &&
+                        x.Time == transaction.Time &&
                         x.Reference == transaction.Reference &&
                         x.ShortReference == transaction.ShortReference &&
                         x.PaymentDetail == transaction.PaymentDetail &&
@@ -138,7 +138,7 @@ namespace Bitar.Services
 
                 transactions.Add(new Bitar.Models.Transaction
                 {
-                    Date = transaction.bokunardags,
+                    Time = transaction.bokunardags,
                     PersonalId = transaction.kt_greidanda,
                     Reference = transaction.tekka_sedilnr,
                     ShortReference = transaction.tilvisun,

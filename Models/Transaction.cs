@@ -13,7 +13,7 @@ namespace Bitar.Models
         public string PersonalId { get; set; }
 
         [Required]
-        public DateTime Date { get; set; }
+        public DateTime Time { get; set; }
         public string Reference { get; set; }
         public string ShortReference { get; set; }
         public string PaymentDetail { get; set; }

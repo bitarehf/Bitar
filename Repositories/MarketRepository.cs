@@ -29,8 +29,9 @@ namespace Bitar.Repositories
             MarketTransaction mtx = new MarketTransaction
             {
                 PersonalId = id,
-                Date = DateTime.Now,
-                Amount = -isk
+                Time = DateTime.Now,
+                Amount = -isk,
+                Type = TransactionType.Buy
             };
 
             try
@@ -104,11 +105,12 @@ namespace Bitar.Repositories
                             _logger.LogWarning(
                                 "Market Transaction.\n" +
                                 $"Id: {mtx.Id}\n" +
-                                $"Date: {mtx.Date}\n" +
+                                $"Date: {mtx.Time}\n" +
                                 $"Rate: {mtx.Rate}\n" +
                                 $"Coins: {mtx.Coins}\n" +
                                 $"Fee: {mtx.Fee}\n" +
                                 $"Amount: {mtx.Amount}\n" +
+                                $"Type: {mtx.Type}\n" +
                                 $"Status: {mtx.Status}");
 
                             var result = await _bitcoin.MakePayment(id, coins);

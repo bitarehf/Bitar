@@ -76,9 +76,10 @@ namespace Bitar.Controllers
             MarketTransaction mtx = new MarketTransaction
             {
                 PersonalId = id,
-                Date = DateTime.Now,
+                Time = DateTime.Now,
                 Coins = -(withdrawal.Amount + withdrawal.Fees),
                 TxId = result.ToString(),
+                Type = TransactionType.Withdrawal,
                 Status = TransactionStatus.Completed
             };
 

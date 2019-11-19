@@ -15,7 +15,7 @@ namespace Bitar.Models
         public string PersonalId { get; set; }
 
         [Required]
-        public DateTime Date { get; set; }
+        public DateTime Time { get; set; }
         public decimal Rate { get; set; }
         public decimal Coins { get; set; }
         public decimal Fee { get; set; }
@@ -24,7 +24,18 @@ namespace Bitar.Models
         public decimal Balance { get; set; }
 
         [Required]
+        public TransactionType Type { get; set; }
+
+        [Required]
         public TransactionStatus Status { get; set; }
+    }
+
+    public enum TransactionType
+    {
+        Buy,
+        Sell,
+        Deposit,
+        Withdrawal
     }
 
     public enum TransactionStatus
