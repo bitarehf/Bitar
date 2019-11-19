@@ -46,7 +46,7 @@ namespace Bitar.Repositories
                     return null;
                 }
 
-                mtx.Fee = accountData.Fee;
+                mtx.Fee = accountData.Fee / 100 * isk;
 
                 decimal rate = Decimal.Zero;
 
@@ -85,7 +85,7 @@ namespace Bitar.Repositories
                     return null;
                 }
 
-                Money coins = Money.Coins(Math.Round(isk * (1 - accountData.Fee) / rate, 8, MidpointRounding.ToZero));
+                Money coins = Money.Coins(Math.Round((isk - mtx.Fee) / rate, 8, MidpointRounding.ToZero));
                 mtx.Coins = coins.ToDecimal(MoneyUnit.BTC);
                 _logger.LogDebug($"Id: {id} Coins: {coins} ISK: {isk} Rate: {rate} Account Balance: {accountData.Balance}");
 
