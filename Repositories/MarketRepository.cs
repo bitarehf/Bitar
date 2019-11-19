@@ -46,7 +46,7 @@ namespace Bitar.Repositories
                     return null;
                 }
 
-                mtx.Fee = accountData.Fee / 100 * isk;
+                mtx.Fee = -(accountData.Fee / 100 * isk);
 
                 decimal rate = Decimal.Zero;
 
