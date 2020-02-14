@@ -45,7 +45,7 @@ namespace Bitar.Controllers
                 .FirstOrDefaultAsync(x => x.Id == id);
         }
 
-        // POST: api/AccountData/UpdateWithdrawalAddress
+        // POST: api.bitar.is/AccountData/UpdateWithdrawalAddress
         /// <summary>
         /// Updates Account WithdrawalAddress
         /// </summary>
@@ -63,7 +63,7 @@ namespace Bitar.Controllers
 
             await _context.SaveChangesAsync();
 
-            return BitcoinAddress.Create(accountData.WithdrawalAddress, Network.Main).ToString();
+            return Ok(bitcoinAddress);
         }
 
         [HttpGet]
