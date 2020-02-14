@@ -45,13 +45,12 @@ namespace Bitar.Controllers
                 .FirstOrDefaultAsync(x => x.Id == id);
         }
 
-
         // POST: api/AccountData
         /// <summary>
         /// Updates Account WithdrawalAddress
         /// </summary>
         [HttpPost]
-        public async Task<ActionResult<BitcoinAddress>> UpdateWithdrawalAddress(BitcoinAddress bitcoinAddress)
+        public async Task<ActionResult<BitcoinAddress>> UpdateWithdrawalAddress([FromBody] string bitcoinAddress)
         {
             string id = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (id == null)
@@ -60,7 +59,7 @@ namespace Bitar.Controllers
             }
 
             var accountData = await _context.AccountData.FindAsync(id);
-            accountData.WithdrawalAddress = bitcoinAddress.ToString();
+            accountData.WithdrawalAddress = bitcoinAddress;
 
             await _context.SaveChangesAsync();
 
