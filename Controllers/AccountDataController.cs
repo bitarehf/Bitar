@@ -133,10 +133,9 @@ namespace Bitar.Controllers
                     accountData.Balance -= amount;
                     await _context.SaveChangesAsync();
 
-                    string hq = accountData.BankAccountNumber.Substring(0, 3);
-                    string hb = accountData.BankAccountNumber.Substring(4, 5);
-                    string num = accountData.BankAccountNumber.Substring(6, 11);
-                    _logger.LogCritical($"hq: {hq} hb: {hb} nr: {num}");
+                    string hq = accountData.BankAccountNumber.Substring(0, 4);
+                    string hb = accountData.BankAccountNumber.Substring(4, 2);
+                    string num = accountData.BankAccountNumber.Substring(6, 5);
                     bool result = _landsbankinn.Pay(hq, hb, num, accountData.Id, amount);
 
                     MarketTransaction mtx = new MarketTransaction
