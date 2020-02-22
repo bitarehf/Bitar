@@ -135,7 +135,7 @@ namespace Bitar.Controllers
 
                     string hq = accountData.BankAccountNumber.Substring(0, 4);
                     string hb = accountData.BankAccountNumber.Substring(4, 2);
-                    string num = accountData.BankAccountNumber.Substring(6, 5);
+                    string num = accountData.BankAccountNumber.Substring(6, 6);
                     bool result = _landsbankinn.Pay(hq, hb, num, accountData.Id, amount);
 
                     MarketTransaction mtx = new MarketTransaction
