@@ -13,6 +13,7 @@ namespace Bitar.Models
         [Required]
         public string Id { get; set; }
         public string WithdrawalAddress { get; set; }
+        public string BankAccountNumber { get; set; }
 
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Derivation { get; set; }
@@ -28,6 +29,7 @@ namespace Bitar.Models
         [ConcurrencyCheck]
         [ForeignKey("PersonalId")]
         public virtual List<Transaction> Transactions { get; set; }
+
         [ConcurrencyCheck]
         [ForeignKey("PersonalId")]
         public virtual List<MarketTransaction> MarketTransactions { get; set; }

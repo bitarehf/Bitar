@@ -52,6 +52,7 @@ namespace Bitar.Controllers
             var accountData = await _context.AccountData
                     .Include(x => x.MarketTransactions)
                     .FirstOrDefaultAsync(x => x.Id == id);
+                    
             if (accountData == null)
             {
                 return NotFound("User not found in database");
