@@ -41,7 +41,7 @@ namespace Bitar.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult<string>> Withdrawal(BitcoinWithdrawal withdrawal)
+        public async Task<ActionResult<string>> Withdraw(BitcoinWithdrawal withdrawal)
         {
             string id = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (id == null)

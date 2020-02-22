@@ -95,7 +95,7 @@ namespace Bitar.Controllers
 
         // POST: api.bitar.is/AccountData/Withdraw
         /// <summary>
-        /// Updates Account WithdrawalAddress
+        /// Withdraw money from account
         /// </summary>
         [HttpPost]
         public async Task<ActionResult<decimal>> Withdraw([FromBody] decimal amount)
@@ -135,8 +135,9 @@ namespace Bitar.Controllers
 
                     string hq = accountData.BankAccountNumber.Substring(0, 3);
                     string hb = accountData.BankAccountNumber.Substring(4, 5);
-                    string nr = accountData.BankAccountNumber.Substring(6, 11);
-                    bool result = _landsbankinn.Pay(hq, hb, nr, accountData.Id, amount);
+                    string num = accountData.BankAccountNumber.Substring(6, 11);
+                    _logger.LogCritical($"hq: {hq} hb: {hb} nr: {num}");
+                    bool result = _landsbankinn.Pay(hq, hb, num, accountData.Id, amount);
 
                     MarketTransaction mtx = new MarketTransaction
                     {
