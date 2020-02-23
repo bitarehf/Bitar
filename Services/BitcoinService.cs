@@ -239,7 +239,7 @@ namespace Bitar.Services
 
                 _logger.LogDebug(
                     $"vsize: {tx.GetVirtualSize()}\n" +
-                    $"{sender} sending {amount} btc to {receiver}" +
+                    $"{sender} sending {amount} btc to {receiver} " +
                     $"with {fees} fees\n" +
                     $"{tx.ToString()}");
 
