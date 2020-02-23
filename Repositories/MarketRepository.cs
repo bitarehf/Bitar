@@ -102,18 +102,11 @@ namespace Bitar.Repositories
                             accountData.Balance -= isk;
                             await _context.SaveChangesAsync();
 
-                            _logger.LogWarning(
-                                "Market Transaction.\n" +
-                                $"Id: {mtx.Id}\n" +
-                                $"Date: {mtx.Time}\n" +
-                                $"Rate: {mtx.Rate}\n" +
-                                $"Coins: {mtx.Coins}\n" +
-                                $"Fee: {mtx.Fee}\n" +
-                                $"Amount: {mtx.Amount}\n" +
-                                $"Type: {mtx.Type}\n" +
-                                $"Status: {mtx.Status}");
+                            
 
                             var result = await _bitcoin.MakePayment(id, coins);
+
+                            _logger.LogDebug($"_bitcoin.MakePayment result: {result}");
                             
                             if (result != null)
                             {
@@ -127,6 +120,17 @@ namespace Bitar.Repositories
                                 // accountData.Balance += isk;
                                 mtx.Status = TransactionStatus.Failed;
                             }
+
+                            _logger.LogWarning(
+                                "Market Transaction.\n" +
+                                $"Id: {mtx.Id}\n" +
+                                $"Date: {mtx.Time}\n" +
+                                $"Rate: {mtx.Rate}\n" +
+                                $"Coins: {mtx.Coins}\n" +
+                                $"Fee: {mtx.Fee}\n" +
+                                $"Amount: {mtx.Amount}\n" +
+                                $"Type: {mtx.Type}\n" +
+                                $"Status: {mtx.Status}");
 
                             accountData.MarketTransactions.Add(mtx);
                             await _context.SaveChangesAsync();
