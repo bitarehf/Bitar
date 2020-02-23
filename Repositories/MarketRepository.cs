@@ -50,7 +50,7 @@ namespace Bitar.Repositories
 
                 decimal rate = Decimal.Zero;
 
-                using (var scope = _serviceProvider.CreateScope())
+                using(var scope = _serviceProvider.CreateScope())
                 {
                     var _stockService = scope.ServiceProvider.GetRequiredService<StockService>();
 
@@ -94,7 +94,7 @@ namespace Bitar.Repositories
                     mtx.Balance = accountData.Balance - isk;
                     _logger.LogDebug($"{id} has sufficient balance for the order");
 
-                    using (var scope = _serviceProvider.CreateScope())
+                    using(var scope = _serviceProvider.CreateScope())
                     {
                         var _bitcoin = scope.ServiceProvider.GetRequiredService<BitcoinService>();
                         if (await _bitcoin.CanMakePayment(id, coins))
@@ -102,19 +102,17 @@ namespace Bitar.Repositories
                             accountData.Balance -= isk;
                             await _context.SaveChangesAsync();
 
-                            
-
                             var result = await _bitcoin.MakePayment(id, coins);
 
-                            _logger.LogDebug($"_bitcoin.MakePayment result: {result}");
-                            
                             if (result != null)
                             {
+                                _logger.LogDebug($"_bitcoin.MakePayment result: {result.ToString()}");
                                 mtx.TxId = result.ToString();
                                 mtx.Status = TransactionStatus.Completed;
                             }
                             else
                             {
+                                _logger.LogCritical($"_bitcoin.MakePayment failed");
                                 // The bitcoin transaction failed.
                                 // Should we refund the user right away?
                                 // accountData.Balance += isk;
