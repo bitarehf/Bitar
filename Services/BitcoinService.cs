@@ -217,7 +217,7 @@ namespace Bitar.Services
                 var coins = unspentCoins.Select(c => c.AsCoin()).ToArray();
                 if (coins.Select(c => c.Amount).Sum() < amount)
                 {
-                    _logger.LogDebug("Use does not have enough funds.");
+                    _logger.LogDebug("User does not have enough funds.");
                     return null;
                 }
 
@@ -300,7 +300,7 @@ namespace Bitar.Services
                 var coins = unspentCoins.Select(c => c.AsCoin()).ToArray();
                 if (coins.Select(c => c.Amount).Sum() < amount)
                 {
-                    _logger.LogDebug("Use does not have enough funds.");
+                    _logger.LogDebug("User does not have enough funds.");
                     return null;
                 }
 
@@ -367,7 +367,7 @@ namespace Bitar.Services
                 var coins = unspentCoins.Select(c => c.AsCoin()).ToArray();
                 if (coins.Select(c => c.Amount).Sum() < amount)
                 {
-                    _logger.LogDebug("Use does not have enough funds.");
+                    _logger.LogDebug("User does not have enough funds.");
                     return null;
                 }
 
