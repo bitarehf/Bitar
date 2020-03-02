@@ -102,17 +102,20 @@ namespace Bitar.Repositories
                             accountData.Balance -= isk;
                             await _context.SaveChangesAsync();
 
-                            var result = await _bitcoin.MakePayment(id, coins);
+                            ExtKey key = _bitcoin._masterKey.Derive(new KeyPath($"m/84'/0'/{accountData.Derivation}'/0/0"));
+                            var receiver = key.PrivateKey.PubKey.GetSegwitAddress(Network.Main);
+
+                            var result = await _bitcoin.SendBitcoin("0", receiver, coins, 36);
 
                             if (result != null)
                             {
-                                _logger.LogDebug($"_bitcoin.MakePayment result: {result.ToString()}");
+                                _logger.LogDebug($"Bitcoin transaction result: {result.ToString()}");
                                 mtx.TxId = result.ToString();
                                 mtx.Status = TransactionStatus.Completed;
                             }
                             else
                             {
-                                _logger.LogCritical($"_bitcoin.MakePayment failed");
+                                _logger.LogCritical($"Bitcoin transaction failed");
                                 // The bitcoin transaction failed.
                                 // Should we refund the user right away?
                                 // accountData.Balance += isk;

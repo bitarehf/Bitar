@@ -19,7 +19,7 @@ namespace Bitar.Services
         private readonly ILogger<BitcoinService> _logger;
         private readonly BitcoinSettings _options;
         private readonly IServiceScopeFactory _scopeFactory;
-        private readonly ExtKey _masterKey;
+        public readonly ExtKey _masterKey;
         public readonly RPCClient _client;
 
         public BitcoinService(
@@ -43,27 +43,6 @@ namespace Bitar.Services
             };
 
             _client = new RPCClient(credentialString, Network.Main);
-        }
-
-        /// <summary>
-        /// Sends specified amount <paramref name="amount"/> of bitcoin to the wallet of the user
-        /// with the Id <paramref name="id"/> parameter.
-        /// </summary>
-        /// <param name="id">Id of the receiver.</param>
-        /// <param name="money">Amount of bitcoin to send.</param>
-        /// <remarks>
-        /// Change address is the same as the sender address.
-        /// </remarks>
-        /// <returns>Transaction (uint256) or null.</returns>
-        public async Task<uint256> MakePayment(string id, Money amount)
-        {
-
-            var accountData = await GetAccountData(id);
-
-            ExtKey key = _masterKey.Derive(new KeyPath($"m/84'/0'/{accountData.Derivation}'/0/0"));
-            var receiver = key.PrivateKey.PubKey.GetSegwitAddress(Network.Main);
-
-            return await SendBitcoin(id, receiver, amount, 36);
         }
 
         /// <summary>
