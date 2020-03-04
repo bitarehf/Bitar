@@ -228,8 +228,8 @@ namespace Bitar.Services
                 {
                     var txId = tx.GetHash();
                     _logger.LogCritical($"TxId: {txId}");
-                    return txId; // Temporary -- Only for testing. 
-                    // return await _client.SendRawTransactionAsync(tx);
+                    // return txId; // Temporary -- Only for testing. 
+                    return await _client.SendRawTransactionAsync(tx);
                 }
                 else
                 {
@@ -314,8 +314,8 @@ namespace Bitar.Services
                     var txId = tx.GetHash();
 
                     _logger.LogCritical($"TxId: {txId}");
-                    return txId; // Temporary -- Only for testing. 
-                    // return await _client.SendRawTransactionAsync(tx);
+                    // return txId; // Temporary -- Only for testing. 
+                    return await _client.SendRawTransactionAsync(tx);
                 }
                 else
                 {
