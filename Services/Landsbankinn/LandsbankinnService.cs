@@ -61,7 +61,7 @@ namespace Bitar.Services
             {
                 dags_fra = DateTime.Today,
                 dags_til = DateTime.Today,
-                reikningur = new LI_reikningur_type() { utibu = "0133", hb = "26", reikningsnr = "014528" },
+                reikningur = new LI_reikningur_type() { utibu = "0133", hb = "15", reikningsnr = "200640" },
                 seta = "",
                 version = 1.1m,
             };
@@ -150,8 +150,8 @@ namespace Bitar.Services
                 LI_reikningur_type withdraw = new LI_reikningur_type()
                 {
                     utibu = "0133",
-                    hb = "26",
-                    reikningsnr = "014528"
+                    hb = "15",
+                    reikningsnr = "200640"
                 };
                 payment.ut.reikningur = withdraw;
 
