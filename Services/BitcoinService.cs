@@ -51,6 +51,101 @@ namespace Bitar.Services
         /// </summary>
         /// <param name="id">Id of the receiver.</param>
         /// <param name="money">Amount of bitcoin to send.</param>
+        public async Task<bool> BitarCanMakePayment(string id, Money amount)
+        {
+            try
+            {
+                var accountData = await GetAccountData(id);
+
+                ExtKey bitarKey = _masterKey.Derive(new KeyPath($"m/84'/0'/0'/0/0"));
+                var sender = bitarKey.PrivateKey.PubKey.GetSegwitAddress(Network.Main);
+
+                ExtKey key = _masterKey.Derive(new KeyPath($"m/84'/0'/0'/0/0"));
+                var receiver = key.PrivateKey.PubKey.GetSegwitAddress(Network.Main);
+
+                var unspentCoins = await _client.ListUnspentAsync(0, int.MaxValue, sender);
+                if (unspentCoins == null)
+                {
+                    return false;
+                }
+
+                foreach (var coin in unspentCoins)
+                {
+                    _logger.LogCritical(
+                        $"Address: {coin.Address}\n" +
+                        $"Amount: {coin.Amount}\n" +
+                        $"Confirmations: {coin.Confirmations}\n" +
+                        $"OutPoint: {coin.OutPoint}");
+                }
+
+                var coins = unspentCoins.Select(c => c.AsCoin()).ToArray();
+                if (coins.Select(c => c.Amount).Sum() < amount)
+                {
+                    _logger.LogCritical("Not enough funds.");
+                    _logger.LogCritical($"Sum: {coins.Select(c => c.Amount).Sum()}");
+                    _logger.LogCritical($"Amount: {amount}");
+                    _logger.LogCritical("==Coins==");
+                    _logger.LogCritical($"{coins.Select(c => c.Amount)}");
+                    _logger.LogCritical($"======");
+                    _logger.LogCritical("==Coins2==");
+                    _logger.LogCritical($"{coins.Count()}");
+                    _logger.LogCritical($"======");
+
+                    return false;
+                }
+
+                var rate = await _client.EstimateSmartFeeAsync(36, EstimateSmartFeeMode.Economical);
+                _logger.LogCritical($"Estimated fee rate: {rate.FeeRate}");
+
+                var coinSelector = new DefaultCoinSelector
+                {
+                    GroupByScriptPubKey = false
+                };
+
+                var builder = Network.Main.CreateTransactionBuilder();
+                builder.DustPrevention = false;
+                var tx = builder
+                    .SetCoinSelector(new DefaultCoinSelector { GroupByScriptPubKey = false })
+                    .AddCoins(coins)
+                    .AddKeys(bitarKey.PrivateKey)
+                    .Send(receiver, amount)
+                    .SetChange(sender)
+                    .SendEstimatedFees(rate.FeeRate)
+                    .BuildTransaction(true);
+
+                _logger.LogCritical(
+                    $"vsize: {tx.GetVirtualSize()}\n" +
+                    $"{sender} sending {amount} btc to {receiver}" +
+                    $"with {builder.EstimateFees(tx, rate.FeeRate)} fees\n" +
+                    $"{tx.ToString()}");
+
+                _logger.LogCritical($"TransactionCheckResult: {tx.Check()}");
+
+                if (tx.Check() == TransactionCheckResult.Success)
+                {
+                    var txId = tx.GetHash();
+                    _logger.LogCritical($"TxId: {txId}");
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e.ToString());
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Checks whether or we can send the specified amount <paramref name="amount"/> of bitcoin to 
+        /// the wallet of the user with the Id <paramref name="id"/> parameter.
+        /// </summary>
+        /// <param name="id">Id of the receiver.</param>
+        /// <param name="money">Amount of bitcoin to send.</param>
         public async Task<bool> CanMakePayment(string id, Money amount)
         {
             try
@@ -453,7 +548,7 @@ namespace Bitar.Services
         {
             Money total = new Money(Decimal.Zero, MoneyUnit.BTC);
 
-            var utxos = await _client.ListUnspentAsync(1, 99999999, address);
+            var utxos = await _client.ListUnspentAsync(1, int.MaxValue, address);
             if (utxos == null)
             {
                 _logger.LogCritical("utxos null?");

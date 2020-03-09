@@ -97,7 +97,7 @@ namespace Bitar.Repositories
                     using(var scope = _serviceProvider.CreateScope())
                     {
                         var _bitcoin = scope.ServiceProvider.GetRequiredService<BitcoinService>();
-                        if (await _bitcoin.CanMakePayment(id, coins))
+                        if (await _bitcoin.BitarCanMakePayment(id, coins))
                         {
                             accountData.Balance -= isk;
                             await _context.SaveChangesAsync();
