@@ -78,11 +78,6 @@ namespace Bitar.Services
                     return false;
                 }
 
-                _logger.LogCritical("===unspentCoins===");
-                _logger.LogCritical($"{unspentCoins}");
-                _logger.LogCritical("======");
-
-
                 foreach (var coin in unspentCoins)
                 {
                     _logger.LogCritical(

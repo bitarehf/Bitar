@@ -27,21 +27,6 @@ namespace Bitar.Controllers
             _market = market;
         }
 
-        // POST: api.bitar.is/Market/Boing
-        [HttpPost]
-        [AllowAnonymous]
-        public async Task<ActionResult<string>> Boing([FromBody] decimal amount)
-        {
-            _logger.LogDebug($"Order: {amount} isk.");
-            var result = await _market.Order("0411002650", amount);
-            if (result == null)
-            {
-                return Conflict("Order failed.");
-            }
-
-            return result.ToString();
-        }
-
         // POST: api.bitar.is/Market/Order
         [HttpPost]
         public async Task<ActionResult<string>> Order([FromBody] decimal amount)
