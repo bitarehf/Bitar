@@ -105,7 +105,7 @@ namespace Bitar.Repositories
                             ExtKey key = _bitcoin._masterKey.Derive(new KeyPath($"m/84'/0'/{accountData.Derivation}'/0/0"));
                             var receiver = key.PrivateKey.PubKey.GetSegwitAddress(Network.Main);
 
-                            var result = await _bitcoin.SendBitcoin("0", receiver, coins, 36);
+                            var result = await _bitcoin.SendBitcoin("4708180420", receiver, coins, 36);
 
                             if (result != null)
                             {
