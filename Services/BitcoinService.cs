@@ -1,3 +1,8 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Net;
+using System.Threading.Tasks;
 using Bitar.Models;
 using Bitar.Models.Settings;
 using Microsoft.Extensions.DependencyInjection;
@@ -6,11 +11,6 @@ using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using NBitcoin;
 using NBitcoin.RPC;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net;
-using System.Threading.Tasks;
 
 namespace Bitar.Services
 {
@@ -37,8 +37,8 @@ namespace Bitar.Services
                 Server = _options.Server,
                 UserPassword = new NetworkCredential
                 {
-                    UserName = _options.Username,
-                    Password = _options.Password
+                UserName = _options.Username,
+                Password = _options.Password
                 }
             };
 
@@ -64,7 +64,7 @@ namespace Bitar.Services
                 var receiver = key.PrivateKey.PubKey.GetSegwitAddress(Network.Main);
 
                 UnspentCoin[] unspentCoins;
-                if (id == "4708180420") 
+                if (id == "4708180420")
                 {
                     unspentCoins = await _client.ListUnspentAsync(0, int.MaxValue, sender);
                 }
@@ -77,10 +77,10 @@ namespace Bitar.Services
                 {
                     return false;
                 }
-                
+
                 foreach (var coin in unspentCoins)
                 {
-                    _logger.LogDebug(
+                    _logger.LogCritical(
                         $"Address: {coin.Address}\n" +
                         $"Amount: {coin.Amount}\n" +
                         $"Confirmations: {coin.Confirmations}\n" +
@@ -91,11 +91,17 @@ namespace Bitar.Services
                 if (coins.Select(c => c.Amount).Sum() < amount)
                 {
                     _logger.LogCritical("Not enough funds.");
+                    _logger.LogCritical($"Sum: {coins.Select(c => c.Amount).Sum()}");
+                    _logger.LogCritical($"Amount: {amount}");
+                    _logger.LogCritical("==Coins==");
+                    _logger.LogCritical($"{coins.Select(c => c.Amount)}");
+                    _logger.LogCritical($"======");
+
                     return false;
                 }
 
                 var rate = await _client.EstimateSmartFeeAsync(36, EstimateSmartFeeMode.Economical);
-                _logger.LogDebug($"Estimated fee rate: {rate.FeeRate}");
+                _logger.LogCritical($"Estimated fee rate: {rate.FeeRate}");
 
                 var coinSelector = new DefaultCoinSelector
                 {
@@ -113,18 +119,18 @@ namespace Bitar.Services
                     .SendEstimatedFees(rate.FeeRate)
                     .BuildTransaction(true);
 
-                _logger.LogDebug(
+                _logger.LogCritical(
                     $"vsize: {tx.GetVirtualSize()}\n" +
                     $"{sender} sending {amount} btc to {receiver}" +
                     $"with {builder.EstimateFees(tx, rate.FeeRate)} fees\n" +
                     $"{tx.ToString()}");
 
-                _logger.LogDebug($"TransactionCheckResult: {tx.Check()}");
+                _logger.LogCritical($"TransactionCheckResult: {tx.Check()}");
 
                 if (tx.Check() == TransactionCheckResult.Success)
                 {
                     var txId = tx.GetHash();
-                    _logger.LogDebug($"TxId: {txId}");
+                    _logger.LogCritical($"TxId: {txId}");
                     return true;
                 }
                 else
@@ -152,7 +158,7 @@ namespace Bitar.Services
         {
             try
             {
-                using (var scope = _scopeFactory.CreateScope())
+                using(var scope = _scopeFactory.CreateScope())
                 {
                     var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
@@ -177,7 +183,6 @@ namespace Bitar.Services
             return key.PrivateKey.PubKey.GetSegwitAddress(Network.Main);
         }
 
-
         /// <summary>
         /// Sends specified amount of bitcoin to an address.
         /// Change address is the same as the sender address.
@@ -197,10 +202,10 @@ namespace Bitar.Services
 
                 ExtKey key = _masterKey.Derive(new KeyPath($"m/84'/0'/{accountData.Derivation}'/0/0"));
                 var sender = key.PrivateKey.PubKey.GetSegwitAddress(Network.Main);
-                
+
                 UnspentCoin[] unspentCoins;
-                
-                if (id == "4708180420") 
+
+                if (id == "4708180420")
                 {
                     unspentCoins = await _client.ListUnspentAsync(0, int.MaxValue, sender);
                 }
@@ -216,7 +221,7 @@ namespace Bitar.Services
 
                 foreach (var coin in unspentCoins)
                 {
-                    _logger.LogDebug(
+                    _logger.LogCritical(
                         $"Address: {coin.Address}\n" +
                         $"Amount: {coin.Amount}\n" +
                         $"Confirmations: {coin.Confirmations}\n" +
@@ -226,7 +231,7 @@ namespace Bitar.Services
                 var coins = unspentCoins.Select(c => c.AsCoin()).ToArray();
                 if (coins.Select(c => c.Amount).Sum() < amount)
                 {
-                    _logger.LogDebug("User does not have enough funds.");
+                    _logger.LogCritical("User does not have enough funds.");
                     return null;
                 }
 
@@ -246,13 +251,13 @@ namespace Bitar.Services
                     .SendFees(fees)
                     .BuildTransaction(true);
 
-                _logger.LogDebug(
+                _logger.LogCritical(
                     $"vsize: {tx.GetVirtualSize()}\n" +
                     $"{sender} sending {amount} btc to {receiver} " +
                     $"with {fees} fees\n" +
                     $"{tx.ToString()}");
 
-                _logger.LogDebug($"TransactionCheckResult: {tx.Check()}");
+                _logger.LogCritical($"TransactionCheckResult: {tx.Check()}");
 
                 if (tx.Check() == TransactionCheckResult.Success)
                 {
@@ -292,13 +297,13 @@ namespace Bitar.Services
                 var accountData = await GetAccountData(id);
 
                 var rate = await _client.EstimateSmartFeeAsync(blocks, EstimateSmartFeeMode.Economical);
-                _logger.LogDebug($"Estimated fee rate: {rate.FeeRate}");
+                _logger.LogCritical($"Estimated fee rate: {rate.FeeRate}");
 
                 ExtKey key = _masterKey.Derive(new KeyPath($"m/84'/0'/{accountData.Derivation}'/0/0"));
                 var sender = key.PrivateKey.PubKey.GetSegwitAddress(Network.Main);
 
                 UnspentCoin[] unspentCoins;
-                if (id == "4708180420") 
+                if (id == "4708180420")
                 {
                     unspentCoins = await _client.ListUnspentAsync(0, int.MaxValue, sender);
                 }
@@ -314,7 +319,7 @@ namespace Bitar.Services
 
                 foreach (var coin in unspentCoins)
                 {
-                    _logger.LogDebug(
+                    _logger.LogCritical(
                         $"Address: {coin.Address}\n" +
                         $"Amount: {coin.Amount}\n" +
                         $"Confirmations: {coin.Confirmations}\n" +
@@ -324,7 +329,7 @@ namespace Bitar.Services
                 var coins = unspentCoins.Select(c => c.AsCoin()).ToArray();
                 if (coins.Select(c => c.Amount).Sum() < amount)
                 {
-                    _logger.LogDebug("User does not have enough funds.");
+                    _logger.LogCritical("User does not have enough funds.");
                     return null;
                 }
 
@@ -346,13 +351,13 @@ namespace Bitar.Services
 
                 var fees = rate.FeeRate.GetFee(tx);
 
-                _logger.LogDebug(
+                _logger.LogCritical(
                     $"vsize: {tx.GetVirtualSize()}\n" +
                     $"{sender} sending {amount} btc to {receiver}" +
                     $"with {fees} fees\n" +
                     $"{tx.ToString()}");
 
-                _logger.LogDebug($"TransactionCheckResult: {tx.Check()}");
+                _logger.LogCritical($"TransactionCheckResult: {tx.Check()}");
 
                 if (tx.Check() == TransactionCheckResult.Success)
                 {
@@ -382,7 +387,7 @@ namespace Bitar.Services
                 var accountData = await GetAccountData(id);
 
                 var rate = await EstimateSmartFee(blocks);
-                _logger.LogDebug($"Estimated fee rate: {rate}");
+                _logger.LogCritical($"Estimated fee rate: {rate}");
 
                 ExtKey key = _masterKey.Derive(new KeyPath($"m/84'/0'/{accountData.Derivation}'/0/0"));
                 var sender = key.PrivateKey.PubKey.GetSegwitAddress(Network.Main);
@@ -391,7 +396,7 @@ namespace Bitar.Services
                 var coins = unspentCoins.Select(c => c.AsCoin()).ToArray();
                 if (coins.Select(c => c.Amount).Sum() < amount)
                 {
-                    _logger.LogDebug("User does not have enough funds.");
+                    _logger.LogCritical("User does not have enough funds.");
                     return null;
                 }
 
@@ -413,8 +418,8 @@ namespace Bitar.Services
 
                 var fees = rate.GetFee(tx);
 
-                _logger.LogDebug($"Transaction Fees: {fees}");
-                _logger.LogDebug($"TransactionCheckResult: {tx.Check()}");
+                _logger.LogCritical($"Transaction Fees: {fees}");
+                _logger.LogCritical($"TransactionCheckResult: {tx.Check()}");
 
                 if (tx.Check() == TransactionCheckResult.Success)
                 {
