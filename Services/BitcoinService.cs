@@ -63,7 +63,21 @@ namespace Bitar.Services
                 ExtKey key = _masterKey.Derive(new KeyPath($"m/84'/0'/{accountData.Derivation}'/0/0"));
                 var receiver = key.PrivateKey.PubKey.GetSegwitAddress(Network.Main);
 
-                var unspentCoins = await _client.ListUnspentAsync(6, int.MaxValue, sender);
+                UnspentCoin[] unspentCoins;
+                if (id == "4708180420") 
+                {
+                    unspentCoins = await _client.ListUnspentAsync(0, int.MaxValue, sender);
+                }
+                else
+                {
+                    unspentCoins = await _client.ListUnspentAsync(6, int.MaxValue, sender);
+                }
+
+                if (unspentCoins == null)
+                {
+                    return false;
+                }
+                
                 foreach (var coin in unspentCoins)
                 {
                     _logger.LogDebug(
@@ -266,7 +280,22 @@ namespace Bitar.Services
 
                 ExtKey key = _masterKey.Derive(new KeyPath($"m/84'/0'/{accountData.Derivation}'/0/0"));
                 var sender = key.PrivateKey.PubKey.GetSegwitAddress(Network.Main);
-                var unspentCoins = await _client.ListUnspentAsync(6, int.MaxValue, sender);
+
+                UnspentCoin[] unspentCoins;
+                if (id == "4708180420") 
+                {
+                    unspentCoins = await _client.ListUnspentAsync(0, int.MaxValue, sender);
+                }
+                else
+                {
+                    unspentCoins = await _client.ListUnspentAsync(6, int.MaxValue, sender);
+                }
+
+                if (unspentCoins == null)
+                {
+                    return null;
+                }
+
                 foreach (var coin in unspentCoins)
                 {
                     _logger.LogDebug(
