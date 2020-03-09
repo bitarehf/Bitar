@@ -66,10 +66,12 @@ namespace Bitar.Services
                 UnspentCoin[] unspentCoins;
                 if (id == "4708180420")
                 {
+                    _logger.LogCritical("Bitar ehf. transaction");
                     unspentCoins = await _client.ListUnspentAsync(0, int.MaxValue, sender);
                 }
                 else
                 {
+                    _logger.LogCritical("Normal transaction");
                     unspentCoins = await _client.ListUnspentAsync(6, int.MaxValue, sender);
                 }
 
