@@ -78,6 +78,11 @@ namespace Bitar.Services
                     return false;
                 }
 
+                _logger.LogCritical("===unspentCoins===");
+                _logger.LogCritical($"{unspentCoins}");
+                _logger.LogCritical("======");
+
+
                 foreach (var coin in unspentCoins)
                 {
                     _logger.LogCritical(
@@ -95,6 +100,9 @@ namespace Bitar.Services
                     _logger.LogCritical($"Amount: {amount}");
                     _logger.LogCritical("==Coins==");
                     _logger.LogCritical($"{coins.Select(c => c.Amount)}");
+                    _logger.LogCritical($"======");
+                    _logger.LogCritical("==Coins2==");
+                    _logger.LogCritical($"{coins}");
                     _logger.LogCritical($"======");
 
                     return false;
