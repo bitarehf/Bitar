@@ -102,7 +102,7 @@ namespace Bitar.Services
                     _logger.LogCritical($"{coins.Select(c => c.Amount)}");
                     _logger.LogCritical($"======");
                     _logger.LogCritical("==Coins2==");
-                    _logger.LogCritical($"{coins}");
+                    _logger.LogCritical($"{coins.Count()}");
                     _logger.LogCritical($"======");
 
                     return false;
