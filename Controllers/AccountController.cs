@@ -176,6 +176,20 @@ namespace Bitar.Controllers
             return "Protected area";
         }
 
+        [Authorize]
+        [HttpGet]
+        public async Task<ActionResult<string>> GetUserEmail()
+        {
+            string id = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var user = await _userManager.FindByIdAsync(id);
+            if (user == null)
+            {
+                return NotFound("User not found");
+            }
+
+            return user.Email;
+        }
+
         // private async Task<object> GenerateJwtToken(string email, IdentityUser user)
         // {
         //     var claims = new List<Claim>
