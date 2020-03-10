@@ -187,7 +187,7 @@ namespace Bitar.Controllers
                 return NotFound("User not found");
             }
 
-            return user.Email.ToString();
+            return Ok(user.Email);
         }
 
         // private async Task<object> GenerateJwtToken(string email, IdentityUser user)
