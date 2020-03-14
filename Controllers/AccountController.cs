@@ -190,6 +190,20 @@ namespace Bitar.Controllers
             return Ok(user.Email);
         }
 
+        [Authorize]
+        [HttpGet]
+        public async Task<ActionResult<string>> GetUserName()
+        {
+            string id = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var user = await _userManager.FindByIdAsync(id);
+            if (user == null)
+            {
+                return NotFound("User not found");
+            }
+
+            return Ok(user.UserName);
+        }
+
         // private async Task<object> GenerateJwtToken(string email, IdentityUser user)
         // {
         //     var claims = new List<Claim>
