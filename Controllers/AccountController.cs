@@ -227,6 +227,7 @@ namespace Bitar.Controllers
         public class RegisterDTO
         {
             [Required]
+            [StringLength(10, MinimumLength = 10)]
             public string Id { get; set; }
 
             [Required]
