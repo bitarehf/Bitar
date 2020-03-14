@@ -227,14 +227,14 @@ namespace Bitar.Controllers
         public class RegisterDTO
         {
             [Required]
-            [StringLength(10, MinimumLength = 10)]
+            [StringLength(10, ErrorMessage = "ID_LENGTH", MinimumLength = 10)]
             public string Id { get; set; }
 
             [Required]
             public string Email { get; set; }
 
             [Required]
-            [StringLength(100, ErrorMessage = "PASSWORD_MIN_LENGTH", MinimumLength = 6)]
+            [StringLength(100, ErrorMessage = "PASSWORD_LENGTH", MinimumLength = 6)]
             public string Password { get; set; }
         }
     }
