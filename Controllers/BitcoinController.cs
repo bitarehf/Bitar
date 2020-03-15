@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
+using Bitar.Helpers;
 using Bitar.Models;
 using Bitar.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -43,6 +44,17 @@ namespace Bitar.Controllers
         [HttpPost]
         public async Task<ActionResult<string>> Withdraw(BitcoinWithdrawal withdrawal)
         {
+            
+            if (MathDecimals.GetDecimals(withdrawal.Amount) > 8)
+            {
+                return BadRequest("withdrawal amount cannot have more than 8 decimals");
+            }
+
+            if (MathDecimals.GetDecimals(withdrawal.Fees) > 8)
+            {
+                return BadRequest("withdrawal fees cannot have more than 8 decimals");
+            }
+
             string id = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (id == null)
             {
@@ -50,9 +62,9 @@ namespace Bitar.Controllers
             }
 
             var accountData = await _context.AccountData
-                    .Include(x => x.MarketTransactions)
-                    .FirstOrDefaultAsync(x => x.Id == id);
-                    
+                .Include(x => x.MarketTransactions)
+                .FirstOrDefaultAsync(x => x.Id == id);
+
             if (accountData == null)
             {
                 return NotFound("User not found in database");
@@ -66,7 +78,6 @@ namespace Bitar.Controllers
             var address = BitcoinAddress.Create(accountData.WithdrawalAddress, Network.Main);
             Money amount = Money.FromUnit(withdrawal.Amount, MoneyUnit.BTC);
             Money fees = Money.FromUnit(withdrawal.Fees, MoneyUnit.BTC);
-
 
             var result = await _bitcoin.SendBitcoin(id, address, amount, fees);
             if (result == null)
@@ -98,7 +109,7 @@ namespace Bitar.Controllers
             {
                 return NotFound("User not found");
             }
-            
+
             BitcoinWitPubKeyAddress address = await _bitcoin.GetDepositAddress(id);
             Money result = await _bitcoin.GetAddressBalance(address);
             return result.ToDecimal(MoneyUnit.BTC);
