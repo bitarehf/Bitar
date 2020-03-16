@@ -5,6 +5,9 @@ using System.Security.Claims;
 using System.Threading.Tasks;
 using Bitar.Models;
 using Bitar.Repositories;
+using Bitar.Services;
+using KrakenCore;
+using KrakenCore.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -20,11 +23,13 @@ namespace Bitar.Controllers
     {
         private readonly ILogger<MarketController> _logger;
         private readonly MarketRepository _market;
+        private readonly OhlcService _ohlc;
 
-        public MarketController(ILogger<MarketController> logger, MarketRepository market)
+        public MarketController(ILogger<MarketController> logger, MarketRepository market, OhlcService ohlc)
         {
             _logger = logger;
             _market = market;
+            _ohlc = ohlc;
         }
 
         // POST: api.bitar.is/Market/Order
@@ -44,6 +49,12 @@ namespace Bitar.Controllers
             }
 
             return result.ToString();
+        }
+
+        [HttpGet]
+        public ActionResult<TimestampedDictionary<string, Ohlc[]>> Ohlc()
+        {
+            return _ohlc.Ohlc;
         }
     }
 }

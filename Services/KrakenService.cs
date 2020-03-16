@@ -2,6 +2,7 @@ using System;
 using System.Threading.Tasks;
 using Bitar.Models.Settings;
 using KrakenCore;
+using KrakenCore.Models;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -20,7 +21,23 @@ namespace Bitar.Services
             _client = new KrakenClient(_options.ApiKey, _options.PrivateKey);
         }
 
-        public async Task<decimal> FetchBTCEUR()
+        public async Task<TimestampedDictionary<string, Ohlc[]>> GetOhlcData()
+        {
+            try
+            {
+                var response = await _client.GetOhlcData("XBTEUR", 1440);
+
+                return response.Result;
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e.ToString());
+            }
+
+            return null;
+        }
+
+        public async Task<decimal> GetBTCEUR()
         {
             try
             {

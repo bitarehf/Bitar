@@ -20,6 +20,7 @@ namespace Bitar.Services
         private readonly LandsbankinnService _landsbankinn;
         private readonly KrakenService _kraken;
         private readonly StockService _stock;
+        private readonly OhlcService _ohlc;
 
         public MarketService(
             ILogger<MarketService> logger,
@@ -27,13 +28,15 @@ namespace Bitar.Services
             BitcoinService bitcoin,
             LandsbankinnService landsbankinn,
             KrakenService kraken,
-            StockService stock)
+            StockService stock,
+            OhlcService ohlc)
         {
             _logger = logger;
             _scopeFactory = scopeFactory;
             _landsbankinn = landsbankinn;
             _kraken = kraken;
             _stock = stock;
+            _ohlc = ohlc;
 
             if (!string.IsNullOrWhiteSpace(_landsbankinn.sessionId))
             {
@@ -50,6 +53,7 @@ namespace Bitar.Services
             _logger.LogInformation("MarketService is starting.");
 
             await _stock.StartAsync(cancellationToken);
+            await _ohlc.StartAsync(cancellationToken);
 
             _timer = new Timer(CheckPayments, null, TimeSpan.Zero, TimeSpan.FromMinutes(2));
 

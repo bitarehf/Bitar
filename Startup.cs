@@ -89,6 +89,7 @@ namespace Bitar
             services.AddSingleton<LandsbankinnService>();
             services.AddSingleton<KrakenService>();
             services.AddSingleton<StockService>();
+            services.AddSingleton<OhlcService>();
             services.AddHostedService<MarketService>();
 
             services.AddControllers();

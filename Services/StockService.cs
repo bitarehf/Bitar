@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Bitar.Hubs;
 using Bitar.Models;
 using KrakenCore;
+using KrakenCore.Models;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -81,7 +82,7 @@ namespace Bitar.Services
                 }
             }
 
-            decimal btceur = await _kraken.FetchBTCEUR();
+            decimal btceur = await _kraken.GetBTCEUR();
             if (btceur == decimal.Zero)
             {
                 _logger.LogCritical($"Failed to update btceur {btceur}.");
@@ -113,7 +114,7 @@ namespace Bitar.Services
             // Send update to all SignalR Clients.
             await _hubContext.Clients.All.SendAsync("StocksUpdated", Stocks);
 
-            _logger.LogInformation($"Stocks Updated: {LastUpdated}");
+            _logger.LogInformation($"Stocks Updated: {DateTime.Now}");
         }
 
         public void OpenMarket()
