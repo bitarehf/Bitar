@@ -54,7 +54,13 @@ namespace Bitar.Controllers
         [HttpGet]
         public ActionResult<OhlcData> Ohlc()
         {
-            return _ohlc.Ohlc;
+            return _ohlc.OhlcData;
+        }
+
+        [HttpGet]
+        public ActionResult<OhlcChartData> OhlcChart()
+        {
+            return _ohlc.OhlcChartData;
         }
     }
 }

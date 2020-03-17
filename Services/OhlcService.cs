@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Bitar.Hubs;
@@ -17,7 +18,8 @@ namespace Bitar.Services
         private readonly IHubContext<StockHub> _hubContext;
         private readonly KrakenService _kraken;
         private Timer _timer;
-        public OhlcData Ohlc { get; set; }
+        public OhlcData OhlcData { get; set; }
+        public OhlcChartData OhlcChartData { get; set; }
 
         public OhlcService(
             ILogger<OhlcService> logger,
@@ -50,9 +52,34 @@ namespace Bitar.Services
 
         public async void UpdateOhlc(object state)
         {
-            Ohlc = await _kraken.GetOhlcData();
+            
+            OhlcData = await _kraken.UpdateOhlc();
 
-            _logger.LogInformation($"Ohlc Updated: {DateTime.Now}");
+            if (OhlcData == null)
+            {
+                _logger.LogWarning($"Ohlc update failed: {DateTime.Now}");
+                return;
+            }
+
+            List<OhlcChart> ohlcChart = new List<OhlcChart>();
+
+            foreach (var u in OhlcData.Ohlc)
+            {
+                ohlcChart.Add(new OhlcChart()
+                {
+                    x = u.Time,
+                    y = new decimal[4] { u.Open, u.High, u.Low, u.Close }
+                });
+            }
+
+            OhlcChartData = new OhlcChartData()
+            {
+                Pair = OhlcData.Pair,
+                Last = OhlcData.Last,
+                OhlcChart = ohlcChart
+            };
+
+            _logger.LogInformation($"Ohlc updated: {DateTime.Now}");
         }
 
     }

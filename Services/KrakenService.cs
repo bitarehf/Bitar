@@ -24,7 +24,7 @@ namespace Bitar.Services
             _client = new KrakenClient(_options.ApiKey, _options.PrivateKey);
         }
 
-        public async Task<OhlcData> GetOhlcData()
+        public async Task<OhlcData> UpdateOhlc()
         {
             try
             {
@@ -34,14 +34,12 @@ namespace Bitar.Services
                 {
                     if (item.Key == "XXBTZEUR")
                     {
-                        OhlcData ohlcData = new OhlcData
+                        return new OhlcData
                         {
                             Pair = "BTCEUR",
                             Last = response.Result.Last,
                             Ohlc = item.Value
                         };
-
-                        return ohlcData;
                     }
                 }
             }
