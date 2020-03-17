@@ -13,7 +13,7 @@ namespace Bitar.Models
 
     public class OhlcChart
     {
-        public long x { get; set; }
+        public DateTime x { get; set; }
         public decimal[] y { get; set; }
     }
 }

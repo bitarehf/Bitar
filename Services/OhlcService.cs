@@ -2,10 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using Bitar.Helpers;
 using Bitar.Hubs;
 using Bitar.Models;
-using KrakenCore;
-using KrakenCore.Models;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -67,7 +66,7 @@ namespace Bitar.Services
             {
                 ohlcChart.Add(new OhlcChart()
                 {
-                    x = u.Time,
+                    x = Converters.ConvertFromUnixTimestamp(u.Time),
                     y = new decimal[4] { u.Open, u.High, u.Low, u.Close }
                 });
             }
