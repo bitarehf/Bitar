@@ -52,7 +52,7 @@ namespace Bitar.Controllers
         }
 
         [HttpGet]
-        public ActionResult<TimestampedDictionary<string, Ohlc[]>> Ohlc()
+        public ActionResult<OhlcData> Ohlc()
         {
             return _ohlc.Ohlc;
         }

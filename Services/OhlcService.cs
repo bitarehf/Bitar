@@ -2,6 +2,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Bitar.Hubs;
+using Bitar.Models;
 using KrakenCore;
 using KrakenCore.Models;
 using Microsoft.AspNetCore.SignalR;
@@ -16,7 +17,7 @@ namespace Bitar.Services
         private readonly IHubContext<StockHub> _hubContext;
         private readonly KrakenService _kraken;
         private Timer _timer;
-        public TimestampedDictionary<string, Ohlc[]> Ohlc { get; set; }
+        public OhlcData Ohlc { get; set; }
 
         public OhlcService(
             ILogger<OhlcService> logger,
