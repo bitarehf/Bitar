@@ -262,7 +262,7 @@ namespace Bitar.Services
             catch (Exception e)
             {
                 _logger.LogError(e.ToString());
-                Login(_options.Username, _options.Password);
+                //Login(_options.Username, _options.Password);
             }
 
             return null;
