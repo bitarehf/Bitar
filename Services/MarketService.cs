@@ -38,24 +38,17 @@ namespace Bitar.Services
             _stock = stock;
             _ohlc = ohlc;
 
-            if (!string.IsNullOrWhiteSpace(_landsbankinn.sessionId))
-            {
-                _logger.LogInformation("Successfully logged in. SessionId: " + _landsbankinn.sessionId);
-            }
-            else
-            {
-                _logger.LogCritical("LandsbankinnClient failed to login in.");
-            }
         }
 
         public async Task StartAsync(CancellationToken cancellationToken)
         {
             _logger.LogInformation("MarketService is starting.");
-
+            
+            await _landsbankinn.StartAsync(cancellationToken);
             await _stock.StartAsync(cancellationToken);
             await _ohlc.StartAsync(cancellationToken);
 
-            _timer = new Timer(CheckPayments, null, TimeSpan.Zero, TimeSpan.FromMinutes(2));
+            _timer = new Timer(CheckPayments, null, TimeSpan.FromSeconds(10), TimeSpan.FromMinutes(2));
 
             await Task.CompletedTask;
         }

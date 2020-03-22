@@ -42,7 +42,7 @@ namespace Bitar.Services
         {
             _logger.LogInformation("StockService is starting.");
 
-            _timer = new Timer(UpdateStockPrices, null, TimeSpan.Zero, TimeSpan.FromMinutes(1));
+            _timer = new Timer(UpdateStockPrices, null, TimeSpan.FromSeconds(5), TimeSpan.FromMinutes(1));
 
             await Task.CompletedTask;
         }
