@@ -7,18 +7,20 @@ using System.Reflection;
 using System.Security.Cryptography.X509Certificates;
 using System.Security.Cryptography.Xml;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.Serialization;
 using Bitar.Models;
 using Bitar.Models.Settings;
 using Landsbankinn;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace Bitar.Services
 {
-    public class LandsbankinnService
+    public class LandsbankinnService : IHostedService
     {
         private readonly ILogger _logger;
         private readonly LandsbankinnSettings _options;
@@ -26,6 +28,7 @@ namespace Bitar.Services
         private readonly string _url = "https://b2b.fbl.is/lib2b.dll?processXML";
         public string sessionId;
         private X509Certificate2 _certificate;
+        private Timer _timer;
         public HashSet<Transaction> transactions = new HashSet<Transaction>();
 
         public LandsbankinnService(ILogger<LandsbankinnService> logger, IOptions<LandsbankinnSettings> options)
@@ -33,8 +36,34 @@ namespace Bitar.Services
             _logger = logger;
             _options = options.Value;
             _certificate = new X509Certificate2(Convert.FromBase64String(_options.Certificate), _options.CertificatePassword);
+        }
 
-            Login(_options.Username, _options.Password);
+        public async Task StartAsync(CancellationToken cancellationToken)
+        {
+            _logger.LogInformation("LandsbankinnService is starting.");
+
+            _timer = new Timer(UpdateSession, null, TimeSpan.Zero, TimeSpan.FromHours(4));
+
+            await Task.CompletedTask;
+        }
+
+        public async Task StopAsync(CancellationToken cancellationToken)
+        {
+            _logger.LogInformation("LandsbankinnService is stopping.");
+
+            _timer?.Change(Timeout.Infinite, 0);
+
+            await Task.CompletedTask;
+        }
+
+        public void UpdateSession(object state)
+        {
+            string sessionResult = Login(_options.Username, _options.Password);
+            if (sessionResult != null)
+            {
+                sessionId = sessionResult;
+                _logger.LogWarning($"Landsbankinn session updated: {DateTime.Now}");
+            }
         }
 
         private bool signed
@@ -42,17 +71,27 @@ namespace Bitar.Services
             get { return _certificate != null; }
         }
 
-        private void Login(string username, string password)
+        private string Login(string username, string password)
         {
-            sessionId = null;
-
             LI_Innskra login = new LI_Innskra();
             login.notandanafn = username;
             login.lykilord = password;
             login.version = 1.1m;
 
-            LI_Innskra_svar oResponse = (LI_Innskra_svar)SendAndReceive(login, Type.GetType("Landsbankinn.LI_Innskra_svar"));
-            sessionId = oResponse.seta;
+            try
+            {
+                LI_Innskra_svar response = (LI_Innskra_svar)SendAndReceive(login, Type.GetType("Landsbankinn.LI_Innskra_svar"));
+                if (response != null)
+                {
+                    return response.seta;
+                }
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e.ToString());
+            }
+
+            return null;
         }
 
         public async Task<List<LI_Fyrirspurn_reikningsyfirlit_svarFaersla>> FetchTransactions()
@@ -111,7 +150,7 @@ namespace Bitar.Services
                             stocks.Add(new Stock()
                             {
                                 Symbol = Symbol.EUR,
-                                    Price = item.solugengi
+                                Price = item.solugengi
                             });
                         }
 
@@ -120,10 +159,11 @@ namespace Bitar.Services
                             stocks.Add(new Stock()
                             {
                                 Symbol = Symbol.USD,
-                                    Price = item.solugengi
+                                Price = item.solugengi
                             });
                         }
                     }
+                    return stocks;
                 }
             }
             catch (Exception e)
@@ -131,7 +171,7 @@ namespace Bitar.Services
                 _logger.LogError(e.ToString());
             }
 
-            return stocks;
+            return null;
         }
 
         public bool Pay(string utibu, string hb, string reikingsnr, string kennitala, decimal amount)
