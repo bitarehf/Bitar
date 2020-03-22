@@ -58,10 +58,18 @@ namespace Bitar.Services
 
         public async void UpdateStockPrices(object state)
         {
-            List<Stock> landsbankinnStocks = await _landsbankinn.FetchCurrencyUpdates();
-
             decimal eurisk = decimal.Zero;
             decimal usdisk = decimal.Zero;
+
+            List<Stock> landsbankinnStocks = await _landsbankinn.FetchCurrencyUpdates();
+
+            if (landsbankinnStocks == null)
+            {
+                _logger.LogCritical($"Failed to update landsbankinnStocks.");
+                CloseMarket();
+                return;
+            } 
+            
             foreach (var stock in landsbankinnStocks)
             {
                 if (stock.Price == decimal.Zero)
