@@ -292,9 +292,18 @@ namespace Bitar.Services
                 HttpWebResponse response = (HttpWebResponse)request.GetResponse();
                 if (response.StatusCode != HttpStatusCode.OK)
                 {
-                    _logger.LogDebug($"response StatuseCode: {response.StatusCode}");
-                    _logger.LogDebug($"response StatusDescription: {response.StatusDescription}");
+                    _logger.LogCritical($"response StatuseCode: {response.StatusCode}");
+                    _logger.LogCritical($"response StatusDescription: {response.StatusDescription}");
+                    return null;
                 }
+
+                if (response.ContentType != "text/xml")
+                {
+                    _logger.LogCritical($"response ContentType is incorrect: {response.ContentType}");
+                    _logger.LogCritical($"Is landsbankinn down? {DateTime.Now}");
+                    return null;
+                }
+
                 //doc.Save("request.xml");
 
                 return Deserialize(response.GetResponseStream(), typeResponse);
