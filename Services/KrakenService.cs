@@ -28,7 +28,7 @@ namespace Bitar.Services
         {
             try
             {
-                var response = await _client.GetOhlcData("XBTEUR", 10080);
+                var response = await _client.GetOhlcData("XBTEUR", 1440);
 
                 foreach (var item in response.Result)
                 {
