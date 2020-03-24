@@ -51,12 +51,14 @@ namespace Bitar.Controllers
             return result.ToString();
         }
 
+        [AllowAnonymous]
         [HttpGet]
         public ActionResult<OhlcData> Ohlc()
         {
             return _ohlc.OhlcData;
         }
 
+        [AllowAnonymous]
         [HttpGet]
         public ActionResult<OhlcChartData> OhlcChart()
         {
