@@ -2,7 +2,7 @@ using KrakenCore.Models;
 
 namespace Bitar.Models
 {
-    public class OhlcData
+    public class OhlcPair
     {
         public string Pair { get; set; }
         public long Last { get; set; }

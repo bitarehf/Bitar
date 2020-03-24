@@ -17,8 +17,8 @@ namespace Bitar.Services
         private readonly IHubContext<StockHub> _hubContext;
         private readonly KrakenService _kraken;
         private Timer _timer;
-        public OhlcData OhlcData { get; set; }
-        public OhlcChartData OhlcChartData { get; set; }
+        public OhlcPair Ohlc { get; set; }
+        public ChartPair ChartPair { get; set; }
 
         public OhlcService(
             ILogger<OhlcService> logger,
@@ -52,19 +52,19 @@ namespace Bitar.Services
         public async void UpdateOhlc(object state)
         {
             
-            OhlcData = await _kraken.UpdateOhlc();
+            Ohlc = await _kraken.UpdateOhlc();
 
-            if (OhlcData == null)
+            if (Ohlc == null)
             {
                 _logger.LogWarning($"Ohlc update failed: {DateTime.Now}");
                 return;
             }
 
-            List<OhlcChart> ohlcChart = new List<OhlcChart>();
+            List<ChartData> chartData = new List<ChartData>();
 
-            foreach (var u in OhlcData.Ohlc)
+            foreach (var u in Ohlc.Ohlc)
             {
-                ohlcChart.Add(new OhlcChart()
+                chartData.Add(new ChartData()
                 {
                     Time = Converters.ConvertFromUnixTimestamp(u.Time), // Convert from Unix timestamp to javascript date
                     Value = u.Open
@@ -72,11 +72,11 @@ namespace Bitar.Services
                 });
             }
 
-            OhlcChartData = new OhlcChartData()
+            ChartPair = new ChartPair()
             {
-                Pair = OhlcData.Pair,
-                Last = OhlcData.Last,
-                OhlcChart = ohlcChart
+                Pair = Ohlc.Pair,
+                Last = Ohlc.Last,
+                ChartData = chartData
             };
 
             _logger.LogInformation($"Ohlc updated: {DateTime.Now}");

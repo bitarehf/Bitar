@@ -53,16 +53,16 @@ namespace Bitar.Controllers
 
         [AllowAnonymous]
         [HttpGet]
-        public ActionResult<OhlcData> Ohlc()
+        public ActionResult<OhlcPair> Ohlc()
         {
-            return _ohlc.OhlcData;
+            return _ohlc.Ohlc;
         }
 
         [AllowAnonymous]
         [HttpGet]
-        public ActionResult<OhlcChartData> OhlcChart()
+        public ActionResult<ChartPair> ChartPair()
         {
-            return _ohlc.OhlcChartData;
+            return _ohlc.ChartPair;
         }
     }
 }

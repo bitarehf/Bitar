@@ -1,17 +1,16 @@
 using System;
 using System.Collections.Generic;
-using KrakenCore.Models;
 
 namespace Bitar.Models
 {
-    public class OhlcChartData
+    public class ChartPair
     {
         public string Pair { get; set; }
         public long Last { get; set; }
-        public List<OhlcChart> OhlcChart { get; set; }
+        public List<ChartData> ChartData { get; set; }
     }
 
-    public class OhlcChart
+    public class ChartData
     {
         public DateTime Time { get; set; }
         public decimal Value { get; set; }
