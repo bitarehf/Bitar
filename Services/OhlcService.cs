@@ -67,7 +67,7 @@ namespace Bitar.Services
                 ohlcChart.Add(new OhlcChart()
                 {
                     Time = Converters.ConvertFromUnixTimestamp(u.Time), // Convert from Unix timestamp to javascript date
-                    Ohlc = u.Open
+                    Value = u.Open
                     //y = new decimal[4] { u.Open, u.High, u.Low, u.Close }
                 });
             }

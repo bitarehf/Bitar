@@ -14,6 +14,6 @@ namespace Bitar.Models
     public class OhlcChart
     {
         public DateTime Time { get; set; }
-        public decimal Ohlc { get; set; }
+        public decimal Value { get; set; }
     }
 }
