@@ -71,7 +71,7 @@ namespace Bitar
                     options.SaveToken = true;
                     options.TokenValidationParameters = new TokenValidationParameters
                     {
-                        ValidateIssuerSigningKey = true,                     
+                        ValidateIssuerSigningKey = true,
                         ValidIssuer = "https://bitar.is",
                         ValidAudience = "https://bitar.is",
                         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration.GetSection("JwtSettings:JwtKey").Value)),
@@ -96,6 +96,15 @@ namespace Bitar
 
             services.AddSignalR();
 
+            services.AddOpenApiDocument(c =>
+            {
+                c.PostProcess = document =>
+                {
+                    document.Info.Version = "v1";
+                    document.Info.Title = "Bitar API";
+                    document.Info.Description = "Endilega láttu okkur vita ef það vantar eitthvað eða þér finnst eitthvað mega bæta.";
+                };
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -106,8 +115,27 @@ namespace Bitar
                 app.UseDeveloperExceptionPage();
             }
 
+            // Enable middleware to serve generated Swagger as a JSON endpoint.
+            app.UseOpenApi(c =>
+            {
+                c.Path = "/{documentName}/swagger.json";
+            });
+
+            // Enable middleware to serve swagger-ui (HTML, JS, CSS, etc.),
+            // specifying the Swagger JSON endpoint.
+            app.UseReDoc(c =>
+            {
+                c.DocumentTitle = "Bitar API Documentation";
+                c.EnableUntrustedSpec();
+                c.ExpandResponses("200,201");
+                c.NoAutoAuth();
+                c.HideLoading();
+                c.DisableSearch();
+                c.RoutePrefix = string.Empty;
+            });
+
             app.UseRouting();
-            
+
             app.UseForwardedHeaders();
 
             app.UseAuthentication();
