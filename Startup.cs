@@ -14,6 +14,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Tokens;
+using NSwag;
+using NSwag.Generation.Processors.Security;
 
 namespace Bitar
 {
@@ -98,6 +100,15 @@ namespace Bitar
 
             services.AddOpenApiDocument(c =>
             {
+                c.Title = "Bitar API";
+                c.OperationProcessors.Add(new AspNetCoreOperationSecurityScopeProcessor("JWT"));
+                c.AddSecurity("JWT", new OpenApiSecurityScheme
+                {
+                    Type = OpenApiSecuritySchemeType.ApiKey,
+                    Name = "Authorization",
+                    In = OpenApiSecurityApiKeyLocation.Header,
+                    Description = "Copy this into the value field: Bearer {token}",
+                });
                 c.PostProcess = document =>
                 {
                     document.Info.Version = "v1";
@@ -115,25 +126,6 @@ namespace Bitar
                 app.UseDeveloperExceptionPage();
             }
 
-            // Enable middleware to serve generated Swagger as a JSON endpoint.
-            app.UseOpenApi(c =>
-            {
-                c.Path = "/{documentName}/swagger.json";
-            });
-
-            // Enable middleware to serve swagger-ui (HTML, JS, CSS, etc.),
-            // specifying the Swagger JSON endpoint.
-            app.UseReDoc(c =>
-            {
-                c.DocumentTitle = "Bitar API Documentation";
-                c.EnableUntrustedSpec();
-                c.ExpandResponses("200,201");
-                c.NoAutoAuth();
-                c.HideLoading();
-                c.DisableSearch();
-                c.RoutePrefix = string.Empty;
-            });
-
             app.UseRouting();
 
             app.UseForwardedHeaders();
@@ -141,12 +133,28 @@ namespace Bitar
             app.UseAuthentication();
             app.UseAuthorization();
 
+            // Enable middleware to serve generated Swagger as a JSON endpoint.
+            app.UseOpenApi(c =>
+            {
+                c.Path = "/{documentName}/swagger.json";
+            });
+
+            // Enable middleware to serve ReDoc (HTML, JS, CSS, etc.).
+            app.UseReDoc(c =>
+            {
+                c.DocumentTitle = "Bitar API Documentation";
+                c.EnableUntrustedSpec();
+                c.ExpandResponses("200,201");
+                c.HideLoading();
+                c.DisableSearch();
+                c.RoutePrefix = string.Empty;
+            });
+
             app.UseCors(builder => builder
                 .WithOrigins("https://bitar.is", "https://www.bitar.is", "http://localhost:4200")
                 .AllowAnyHeader()
                 .AllowAnyMethod()
                 .AllowCredentials());
-
 
             app.UseEndpoints(endpoints =>
             {
