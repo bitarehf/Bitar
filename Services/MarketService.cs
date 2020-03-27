@@ -17,6 +17,7 @@ namespace Bitar.Services
         private readonly ILogger _logger;
         private readonly IServiceScopeFactory _scopeFactory;
         private Timer _timer;
+        private readonly AssetService _asset;
         private readonly LandsbankinnService _landsbankinn;
         private readonly KrakenService _kraken;
         private readonly StockService _stock;
@@ -25,7 +26,7 @@ namespace Bitar.Services
         public MarketService(
             ILogger<MarketService> logger,
             IServiceScopeFactory scopeFactory,
-            BitcoinService bitcoin,
+            AssetService asset,
             LandsbankinnService landsbankinn,
             KrakenService kraken,
             StockService stock,
@@ -33,6 +34,7 @@ namespace Bitar.Services
         {
             _logger = logger;
             _scopeFactory = scopeFactory;
+            _asset = asset;
             _landsbankinn = landsbankinn;
             _kraken = kraken;
             _stock = stock;
@@ -44,6 +46,7 @@ namespace Bitar.Services
         {
             _logger.LogInformation("MarketService is starting.");
             
+            await _asset.StartAsync(cancellationToken);
             await _landsbankinn.StartAsync(cancellationToken);
             await _stock.StartAsync(cancellationToken);
             await _ohlc.StartAsync(cancellationToken);

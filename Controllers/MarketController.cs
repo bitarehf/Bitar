@@ -1,18 +1,13 @@
-using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using Bitar.Models;
 using Bitar.Repositories;
 using Bitar.Services;
-using KrakenCore;
-using KrakenCore.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using NBitcoin;
 
 namespace Bitar.Controllers
 {
@@ -24,12 +19,14 @@ namespace Bitar.Controllers
         private readonly ILogger<MarketController> _logger;
         private readonly MarketRepository _market;
         private readonly OhlcService _ohlc;
+        private readonly AssetService _asset;
 
-        public MarketController(ILogger<MarketController> logger, MarketRepository market, OhlcService ohlc)
+        public MarketController(ILogger<MarketController> logger, MarketRepository market, OhlcService ohlc, AssetService asset)
         {
             _logger = logger;
             _market = market;
             _ohlc = ohlc;
+            _asset = asset;
         }
 
         // POST: api.bitar.is/Market/Order

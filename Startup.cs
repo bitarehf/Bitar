@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System;
+using System.Text;
 using Bitar.Hubs;
 using Bitar.Models;
 using Bitar.Models.Settings;
@@ -86,9 +87,14 @@ namespace Bitar
             services.Configure<LandsbankinnSettings>(Configuration.GetSection("LandsbankinnSettings"));
             services.Configure<KrakenSettings>(Configuration.GetSection("KrakenSettings"));
 
+            services.AddHttpClient<ArionService>(c =>
+            {
+                c.BaseAddress = new Uri("https://arionbanki.is/Webservice/PortalCurrency.ashx");
+            });
             services.AddScoped<MarketRepository>();
             services.AddSingleton<BitcoinService>();
             services.AddSingleton<LandsbankinnService>();
+            services.AddSingleton<AssetService>();
             services.AddSingleton<KrakenService>();
             services.AddSingleton<StockService>();
             services.AddSingleton<OhlcService>();
