@@ -52,7 +52,7 @@ namespace Bitar.Controllers
         [HttpGet]
         public ActionResult<OhlcPair> Ohlc()
         {
-            return _ohlc.Ohlc;
+            return _ohlc.OhlcPair;
         }
 
         [AllowAnonymous]
