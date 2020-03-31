@@ -131,7 +131,7 @@ namespace Bitar.Services
                     Converters.UnixTimestampToDateTime(m.Time)
                     ).TotalMilliseconds)).First();
 
-            return g.Open - _btceur.Ask[0];
+            return (g.Open - _btceur.Ask[0]) * Tickers["eurisk"].Ask;
         }
 
         public void OpenMarket()
