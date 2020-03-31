@@ -111,7 +111,8 @@ namespace Bitar.Controllers
             {
                 Id = register.Id,
                 UserName = register.Id,
-                Email = register.Email
+                Email = register.Email,
+                RegistrationDate = DateTime.Now
             };
 
             _logger.LogDebug(
