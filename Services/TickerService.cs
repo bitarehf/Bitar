@@ -127,11 +127,11 @@ namespace Bitar.Services
             var t = await _kraken.UpdateOhlc(60);
             var g = t.Ohlc.ToList().OrderBy(m =>
                 Math.Abs((
-                    Converters.UnixTimestampToDateTime(m.Time) -
-                    DateTime.Now.AddDays(-1)).TotalMilliseconds)
-                ).First();
+                    DateTime.Now.AddDays(-1) -
+                    Converters.UnixTimestampToDateTime(m.Time)
+                    ).TotalMilliseconds)).First();
 
-            return g.Vwap + _btceur.Ask[0];
+            return g.Open - _btceur.Ask[0];
         }
 
         public void OpenMarket()
