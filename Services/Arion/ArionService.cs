@@ -30,15 +30,15 @@ namespace Bitar.Services
             {
                 string coin;
 
-                if (pair == "EURISK")
+                if (pair == "eurisk")
                 {
                     coin = "eur";
                 }
-                else if (pair == "USDISK")
+                else if (pair == "usdisk")
                 {
                     coin = "usd";
                 }
-                else if (pair == "GBPISK")
+                else if (pair == "gbpisk")
                 {
                     coin = "gbp";
                 }

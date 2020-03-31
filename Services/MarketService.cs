@@ -20,7 +20,7 @@ namespace Bitar.Services
         private readonly AssetService _asset;
         private readonly LandsbankinnService _landsbankinn;
         private readonly KrakenService _kraken;
-        private readonly StockService _stock;
+        private readonly TickerService _ticker;
         private readonly OhlcService _ohlc;
 
         public MarketService(
@@ -29,7 +29,7 @@ namespace Bitar.Services
             AssetService asset,
             LandsbankinnService landsbankinn,
             KrakenService kraken,
-            StockService stock,
+            TickerService ticker,
             OhlcService ohlc)
         {
             _logger = logger;
@@ -37,7 +37,7 @@ namespace Bitar.Services
             _asset = asset;
             _landsbankinn = landsbankinn;
             _kraken = kraken;
-            _stock = stock;
+            _ticker = ticker;
             _ohlc = ohlc;
 
         }
@@ -48,7 +48,7 @@ namespace Bitar.Services
             
             await _asset.StartAsync(cancellationToken);
             await _landsbankinn.StartAsync(cancellationToken);
-            await _stock.StartAsync(cancellationToken);
+            await _ticker.StartAsync(cancellationToken);
             await _ohlc.StartAsync(cancellationToken);
 
             _timer = new Timer(CheckPayments, null, TimeSpan.FromSeconds(10), TimeSpan.FromMinutes(2));

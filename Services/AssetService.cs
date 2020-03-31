@@ -46,7 +46,7 @@ namespace Bitar.Services
 
         public async void UpdateRates(object state)
         {
-            Assets["EURISK"] = await _arion.GetArionRates("EURISK", new DateTime(2015, 1, 1).ToString("yyyy'-'MM'-'dd"), DateTime.Now.ToString("yyyy'-'MM'-'dd"));
+            Assets["eurisk"] = await _arion.GetArionRates("eurisk", new DateTime(2015, 1, 1).ToString("yyyy'-'MM'-'dd"), DateTime.Now.ToString("yyyy'-'MM'-'dd"));
             // Assets["USDISK"] = await _arion.GetArionRates("USDISK", new DateTime(2015, 1, 1).ToString("yyyy'-'MM'-'dd"), DateTime.Now.ToString("yyyy'-'MM'-'dd"));
         }
     }

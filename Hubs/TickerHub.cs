@@ -4,18 +4,18 @@ using Microsoft.AspNetCore.SignalR;
 
 namespace Bitar.Hubs
 {
-    public class StockHub : Hub
+    public class TickerHub : Hub
     {
-        private readonly StockService _stock;
+        private readonly TickerService _ticker;
 
-        public StockHub(StockService stock)
+        public TickerHub(TickerService ticker)
         {
-            _stock = stock;
+            _ticker = ticker;
         }
 
         public override async Task OnConnectedAsync()
         {
-            await Clients.Caller.SendAsync("StocksUpdated", _stock.Stocks);
+            await Clients.Caller.SendAsync("TickersUpdated", _ticker.Tickers);
             await base.OnConnectedAsync();
         }
     }

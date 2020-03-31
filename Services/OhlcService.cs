@@ -16,7 +16,7 @@ namespace Bitar.Services
     public class OhlcService : IHostedService
     {
         private readonly ILogger<OhlcService> _logger;
-        private readonly IHubContext<StockHub> _hubContext;
+        private readonly IHubContext<TickerHub> _hubContext;
         private readonly AssetService _asset;
         private readonly KrakenService _kraken;
         private Timer _timer;
@@ -25,7 +25,7 @@ namespace Bitar.Services
 
         public OhlcService(
             ILogger<OhlcService> logger,
-            IHubContext<StockHub> hubContext,
+            IHubContext<TickerHub> hubContext,
             LandsbankinnService landsbankinn,
             AssetService asset,
             KrakenService kraken)
@@ -66,7 +66,7 @@ namespace Bitar.Services
             }
 
             List<ChartData> chartData = new List<ChartData>();
-            List<Asset> a = _asset.Assets["EURISK"];
+            List<Asset> a = _asset.Assets["eurisk"];
 
             foreach (var ohlc in OhlcPair.Ohlc)
             {

@@ -126,7 +126,7 @@ namespace Bitar.Services
             return null; // No transactions received.
         }
 
-        public async Task<List<Stock>> FetchCurrencyUpdates()
+        public async Task<Dictionary<string, Ticker>> FetchCurrencyUpdates()
         {
             var request = new LI_Fyrirspurn_gengi_gjaldmidla()
             {
@@ -136,7 +136,7 @@ namespace Bitar.Services
                 version = 1.1m
             };
 
-            List<Stock> stocks = new List<Stock>();
+            Dictionary<string, Ticker> bankTicker = new Dictionary<string, Ticker>();
 
             try
             {
@@ -147,23 +147,25 @@ namespace Bitar.Services
                     {
                         if (item.iso_takn == LI_ISO_takn_gjaldmidils_type.EUR)
                         {
-                            stocks.Add(new Stock()
+                            bankTicker["eurisk"] = new Ticker
                             {
-                                Symbol = Symbol.EUR,
-                                Price = item.solugengi
-                            });
+                                Ask = item.solugengi,
+                                Bid = item.kaupgengi,
+                                LastUpdated = DateTime.Now
+                            };
                         }
 
                         if (item.iso_takn == LI_ISO_takn_gjaldmidils_type.USD)
                         {
-                            stocks.Add(new Stock()
+                            bankTicker["usdisk"] = new Ticker
                             {
-                                Symbol = Symbol.USD,
-                                Price = item.solugengi
-                            });
+                                Ask = item.solugengi,
+                                Bid = item.kaupgengi,
+                                LastUpdated = DateTime.Now
+                            };
                         }
                     }
-                    return stocks;
+                    return bankTicker;
                 }
             }
             catch (Exception e)

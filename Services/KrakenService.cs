@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Bitar.Models;
 using Bitar.Models.Settings;
@@ -42,6 +43,21 @@ namespace Bitar.Services
                         };
                     }
                 }
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e.ToString());
+            }
+
+            return null;
+        }
+
+        public async Task<TickerInfo> GetTickerInformation(string ticker)
+        {
+            try
+            {
+                var response = await _client.GetTickerInformation(ticker);
+                return response.Result.Select(c => c.Value).First();
             }
             catch (Exception e)
             {

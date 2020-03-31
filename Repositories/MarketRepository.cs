@@ -52,17 +52,11 @@ namespace Bitar.Repositories
 
                 using(var scope = _serviceProvider.CreateScope())
                 {
-                    var _stockService = scope.ServiceProvider.GetRequiredService<StockService>();
+                    var _tickerService = scope.ServiceProvider.GetRequiredService<TickerService>();
 
-                    if (_stockService.MarketState == MarketState.Open)
+                    if (_tickerService.MarketState == MarketState.Open)
                     {
-                        foreach (var stock in _stockService.Stocks)
-                        {
-                            if (stock.Symbol == Symbol.BTC)
-                            {
-                                rate = stock.Price;
-                            }
-                        }
+                        rate = _tickerService.Tickers["btcisk"].Ask;
                     }
                     else
                     {

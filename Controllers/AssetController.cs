@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Bitar.Models;
 using Bitar.Repositories;
 using Bitar.Services;
+using KrakenCore.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -25,6 +26,13 @@ namespace Bitar.Controllers
             _logger = logger;
             _asset = asset;
         }
+
+        // [Route("{asset}")]
+        // [HttpGet]
+        // public ActionResult<TickerInfo> Asset(string asset)
+        // {
+        //     return null;
+        // }
 
         [Route("{asset}/{start:datetime}/{end:datetime}")]
         [HttpGet]

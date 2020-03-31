@@ -96,7 +96,7 @@ namespace Bitar
             services.AddSingleton<LandsbankinnService>();
             services.AddSingleton<AssetService>();
             services.AddSingleton<KrakenService>();
-            services.AddSingleton<StockService>();
+            services.AddSingleton<TickerService>();
             services.AddSingleton<OhlcService>();
             services.AddHostedService<MarketService>();
 
@@ -164,7 +164,7 @@ namespace Bitar
 
             app.UseEndpoints(endpoints =>
             {
-                endpoints.MapHub<StockHub>("/stocks");
+                endpoints.MapHub<TickerHub>("/tickers");
                 endpoints.MapControllers();
             });
         }
