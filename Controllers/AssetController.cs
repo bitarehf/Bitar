@@ -34,12 +34,30 @@ namespace Bitar.Controllers
         //     return null;
         // }
 
+        [Route("{asset}")]
+        [HttpGet]
+        public ActionResult<decimal> Asset(string asset)
+        {
+            if (asset == "btcisk")
+            {
+                return 1010m;
+            }
+            return 1234m;
+        }
+
         [Route("{asset}/{start:datetime}/{end:datetime}")]
         [HttpGet]
         public ActionResult<IEnumerable<Asset>> Asset(string asset, DateTime start, DateTime end)
         {
-            return _asset.Assets[asset]
-                .Where(a => a.Time >= start && a.Time <= end).ToList();
+            asset = asset.ToLower();
+            
+            if (asset == "eurisk" || asset == "usdisk")
+            {
+                return _asset.Assets[asset]
+                    .Where(a => a.Time >= start && a.Time <= end).ToList();
+            }
+
+            return BadRequest();
         }
     }
 }

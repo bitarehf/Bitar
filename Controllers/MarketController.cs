@@ -52,14 +52,14 @@ namespace Bitar.Controllers
         [HttpGet]
         public ActionResult<OhlcPair> Ohlc()
         {
-            return _ohlc.OhlcPair;
+            return _ohlc.OhlcPair1440;
         }
 
         [AllowAnonymous]
         [HttpGet]
         public ActionResult<ChartPair> ChartPair()
         {
-            return _ohlc.ChartPair;
+            return _ohlc.ChartPair1440;
         }
     }
 }

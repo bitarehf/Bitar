@@ -25,11 +25,11 @@ namespace Bitar.Services
             _client = new KrakenClient(_options.ApiKey, _options.PrivateKey);
         }
 
-        public async Task<OhlcPair> UpdateOhlc()
+        public async Task<OhlcPair> UpdateOhlc(int interval)
         {
             try
             {
-                var response = await _client.GetOhlcData("XBTEUR", 1440);
+                var response = await _client.GetOhlcData("XBTEUR", interval);
 
                 foreach (var item in response.Result)
                 {

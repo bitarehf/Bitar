@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Bitar.Helpers;
 using Bitar.Hubs;
 using Bitar.Models;
 using KrakenCore;
@@ -22,12 +24,14 @@ namespace Bitar.Services
         private Timer _timer;
         public MarketState MarketState { get; private set; }
         public Dictionary<string, Ticker> Tickers = new Dictionary<string, Ticker>();
+        private TickerInfo _btceur;
 
         public TickerService(
             ILogger<TickerService> logger,
             IHubContext<TickerHub> hubContext,
             LandsbankinnService landsbankinn,
-            KrakenService kraken)
+            KrakenService kraken,
+            OhlcService ohlc)
         {
             _logger = logger;
             _hubContext = hubContext;
@@ -100,10 +104,13 @@ namespace Bitar.Services
                 return;
             }
 
+            _btceur = btceur;
+
             Tickers["btcisk"] = new Ticker
             {
                 Ask = decimal.Ceiling(Tickers["eurisk"].Ask * btceur.Ask[0] * 1.03m + 100m),
                 Bid = decimal.Floor(Tickers["eurisk"].Bid * btceur.Bid[0] * 0.99m - 100m),
+                DailyChange = await getDailyChange(),
                 LastUpdated = DateTime.Now
             };
 
@@ -113,6 +120,18 @@ namespace Bitar.Services
             await _hubContext.Clients.All.SendAsync("TickersUpdated", Tickers);
 
             _logger.LogInformation($"Tickers Updated: {DateTime.Now}");
+        }
+
+        public async Task<decimal> getDailyChange()
+        {
+            var t = await _kraken.UpdateOhlc(60);
+            var g = t.Ohlc.ToList().OrderBy(m =>
+                Math.Abs((
+                    Converters.UnixTimestampToDateTime(m.Time) -
+                    DateTime.Now.AddDays(-1)).TotalMilliseconds)
+                ).First();
+
+            return g.Vwap + _btceur.Ask[0];
         }
 
         public void OpenMarket()

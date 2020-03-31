@@ -20,8 +20,10 @@ namespace Bitar.Services
         private readonly AssetService _asset;
         private readonly KrakenService _kraken;
         private Timer _timer;
-        public OhlcPair OhlcPair { get; set; }
-        public ChartPair ChartPair { get; set; }
+        public OhlcPair OhlcPair1440 { get; set; }
+        public ChartPair ChartPair1440 { get; set; }
+        public OhlcPair OhlcPair60 { get; set; }
+        // public ChartPair ChartPair60 { get; set; }
 
         public OhlcService(
             ILogger<OhlcService> logger,
@@ -57,18 +59,21 @@ namespace Bitar.Services
         public async void UpdateOhlc(object state)
         {
 
-            OhlcPair = await _kraken.UpdateOhlc();
+            var ohlcPair1440 = await _kraken.UpdateOhlc(1440);
+            var ohlcPair60 = await _kraken.UpdateOhlc(60);
 
-            if (OhlcPair == null)
+            if (ohlcPair1440 == null || OhlcPair60 == null)
             {
                 _logger.LogWarning($"Ohlc update failed: {DateTime.Now}");
                 return;
             }
+            
+            OhlcPair1440 = ohlcPair1440;
 
             List<ChartData> chartData = new List<ChartData>();
             List<Asset> a = _asset.Assets["eurisk"];
 
-            foreach (var ohlc in OhlcPair.Ohlc)
+            foreach (var ohlc in OhlcPair1440.Ohlc)
             {
                 var t = Converters.UnixTimestampToDateTime(ohlc.Time);
                 
@@ -83,10 +88,10 @@ namespace Bitar.Services
                 });
             }
 
-            ChartPair = new ChartPair()
+            ChartPair1440 = new ChartPair()
             {
-                Pair = OhlcPair.Pair,
-                Last = OhlcPair.Last,
+                Pair = OhlcPair1440.Pair,
+                Last = OhlcPair1440.Last,
                 ChartData = chartData
             };
 
