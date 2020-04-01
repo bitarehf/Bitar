@@ -62,13 +62,14 @@ namespace Bitar.Services
             var ohlcPair1440 = await _kraken.UpdateOhlc(1440);
             var ohlcPair60 = await _kraken.UpdateOhlc(60);
 
-            if (ohlcPair1440 == null || OhlcPair60 == null)
+            if (ohlcPair1440 == null || ohlcPair60 == null)
             {
                 _logger.LogWarning($"Ohlc update failed: {DateTime.Now}");
                 return;
             }
             
             OhlcPair1440 = ohlcPair1440;
+            OhlcPair60 = ohlcPair60;
 
             List<ChartData> chartData = new List<ChartData>();
             List<Asset> a = _asset.Assets["eurisk"];
