@@ -106,11 +106,19 @@ namespace Bitar.Services
 
             _btceur = btceur;
 
+            var dailyChange = await GetDailyChange();
+            if (dailyChange == Decimal.Zero)
+            {
+                _logger.LogCritical($"Failed to update dailyChange {dailyChange}.");
+                CloseMarket();
+                return;
+            }
+
             Tickers["btcisk"] = new Ticker
             {
                 Ask = decimal.Ceiling(Tickers["eurisk"].Ask * btceur.Ask[0] * 1.03m + 100m),
                 Bid = decimal.Floor(Tickers["eurisk"].Bid * btceur.Bid[0] * 0.99m - 100m),
-                DailyChange = await getDailyChange(),
+                DailyChange = dailyChange,
                 LastUpdated = DateTime.Now
             };
 
@@ -122,10 +130,16 @@ namespace Bitar.Services
             _logger.LogInformation($"Tickers Updated: {DateTime.Now}");
         }
 
-        public async Task<decimal> getDailyChange()
+        public async Task<decimal> GetDailyChange()
         {
-            var t = await _kraken.UpdateOhlc(60);
-            var g = t.Ohlc.ToList().OrderBy(m =>
+            var r = await _kraken.UpdateOhlc(60);
+            
+            if (r == null)
+            {
+                return Decimal.Zero;
+            }
+
+            var g = r.Ohlc.ToList().OrderBy(m =>
                 Math.Abs((
                     DateTime.Now.AddDays(-1) -
                     Converters.UnixTimestampToDateTime(m.Time)
