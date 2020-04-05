@@ -21,6 +21,7 @@ namespace Bitar.Services
         private readonly IHubContext<TickerHub> _hubContext;
         private readonly LandsbankinnService _landsbankinn;
         private readonly KrakenService _kraken;
+        private readonly AssetService _asset;
         private Timer _timer;
         public MarketState MarketState { get; private set; }
         public Dictionary<string, Ticker> Tickers = new Dictionary<string, Ticker>();
@@ -31,12 +32,13 @@ namespace Bitar.Services
             IHubContext<TickerHub> hubContext,
             LandsbankinnService landsbankinn,
             KrakenService kraken,
-            OhlcService ohlc)
+            AssetService asset)
         {
             _logger = logger;
             _hubContext = hubContext;
             _landsbankinn = landsbankinn;
             _kraken = kraken;
+            _asset = asset;
         }
 
         public async Task StartAsync(CancellationToken cancellationToken)
@@ -133,7 +135,7 @@ namespace Bitar.Services
         public async Task<decimal> GetDailyChange()
         {
             var r = await _kraken.UpdateOhlc(60);
-            
+
             if (r == null)
             {
                 return Decimal.Zero;
@@ -145,7 +147,10 @@ namespace Bitar.Services
                     Converters.UnixTimestampToDateTime(m.Time)
                     ).TotalMilliseconds)).First();
 
-            return (_btceur.Ask[0] - g.Open) * Tickers["eurisk"].Ask;
+            var b = _asset.Assets["eurisk"].OrderBy(m =>
+                Math.Abs((DateTime.Now.AddDays(-1) - m.Time).TotalMilliseconds)).First();
+
+            return (b.Ask - g.Open) * Tickers["eurisk"].Ask;
         }
 
         public void OpenMarket()
