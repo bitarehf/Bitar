@@ -134,23 +134,23 @@ namespace Bitar.Services
 
         public async Task<decimal> GetDailyChange()
         {
-            var r = await _kraken.UpdateOhlc(60);
+            var ohlcPair = await _kraken.UpdateOhlc(60);
 
-            if (r == null)
+            if (ohlcPair == null)
             {
                 return Decimal.Zero;
             }
 
-            var g = r.Ohlc.ToList().OrderBy(m =>
+            var ohlc = ohlcPair.Ohlc.ToList().OrderBy(m =>
                 Math.Abs((
                     DateTime.Now.AddDays(-1) -
                     Converters.UnixTimestampToDateTime(m.Time)
                     ).TotalMilliseconds)).First();
 
-            var b = _asset.Assets["eurisk"].OrderBy(m =>
+            var asset = _asset.Assets["eurisk"].OrderBy(m =>
                 Math.Abs((DateTime.Now.AddDays(-1) - m.Time).TotalMilliseconds)).First();
 
-            return (b.Ask - g.Open) * Tickers["eurisk"].Ask;
+            return (_btceur.Ask[0] - ohlc.Open) * asset.Ask;
         }
 
         public void OpenMarket()
