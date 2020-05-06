@@ -46,11 +46,11 @@ namespace Bitar.Repositories
                     return null;
                 }
 
-                mtx.Fee = -(accountData.Fee / 100 * isk);
+                mtx.Fee = -Math.Round(isk * (accountData.Fee / 100));
 
                 decimal rate = Decimal.Zero;
 
-                using(var scope = _serviceProvider.CreateScope())
+                using (var scope = _serviceProvider.CreateScope())
                 {
                     var _tickerService = scope.ServiceProvider.GetRequiredService<TickerService>();
 
@@ -79,7 +79,8 @@ namespace Bitar.Repositories
                     return null;
                 }
 
-                Money coins = Money.Coins(Math.Round((isk + mtx.Fee) / rate, 8, MidpointRounding.ToZero));
+                Money coins = Money.Coins(
+                    Math.Round(isk / rate * (1 - accountData.Fee / 100), 8, MidpointRounding.ToZero));
                 mtx.Coins = coins.ToDecimal(MoneyUnit.BTC);
                 _logger.LogDebug($"Id: {id} Coins: {coins} ISK: {isk} Rate: {rate} Account Balance: {accountData.Balance}");
 
@@ -88,7 +89,7 @@ namespace Bitar.Repositories
                     mtx.Balance = accountData.Balance - isk;
                     _logger.LogDebug($"{id} has sufficient balance for the order");
 
-                    using(var scope = _serviceProvider.CreateScope())
+                    using (var scope = _serviceProvider.CreateScope())
                     {
                         var _bitcoin = scope.ServiceProvider.GetRequiredService<BitcoinService>();
                         if (await _bitcoin.BitarCanMakePayment(id, coins))

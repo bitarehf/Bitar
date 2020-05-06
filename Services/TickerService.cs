@@ -119,7 +119,7 @@ namespace Bitar.Services
             Tickers["btcisk"] = new Ticker
             {
                 Ask = decimal.Ceiling(Tickers["eurisk"].Ask * btceur.Ask[0] * 1.03m + 100m),
-                Bid = decimal.Floor(Tickers["eurisk"].Bid * btceur.Bid[0] * 0.99m - 100m),
+                Bid = decimal.Floor(Tickers["eurisk"].Bid * btceur.Bid[0] * 0.98m - 100m),
                 DailyChange = dailyChange,
                 LastUpdated = DateTime.Now
             };
