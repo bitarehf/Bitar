@@ -22,12 +22,18 @@ namespace Bitar.Controllers
         private readonly ILogger<BitcoinController> _logger;
         private readonly BitcoinService _bitcoin;
         private readonly ApplicationDbContext _context;
+        private readonly TickerService _ticker;
 
-        public BitcoinController(ILogger<BitcoinController> logger, ApplicationDbContext context, BitcoinService bitcoin)
+        public BitcoinController(
+            ILogger<BitcoinController> logger,
+            ApplicationDbContext context,
+            BitcoinService bitcoin,
+            TickerService ticker)
         {
             _logger = logger;
             _context = context;
             _bitcoin = bitcoin;
+            _ticker = ticker;
         }
 
         // Post: api/AccountData
@@ -44,7 +50,7 @@ namespace Bitar.Controllers
         [HttpPost]
         public async Task<ActionResult<string>> Withdraw(BitcoinWithdrawal withdrawal)
         {
-            
+
             if (MathDecimals.GetDecimals(withdrawal.Amount) > 8)
             {
                 return BadRequest("withdrawal amount cannot have more than 8 decimals");
@@ -85,6 +91,13 @@ namespace Bitar.Controllers
                 return Conflict("Failed to create/send transaction");
             }
 
+            decimal rate = Decimal.Zero;
+
+            if (_ticker.MarketState == MarketState.Open)
+            {
+                rate = _ticker.Tickers["btcisk"].Ask;
+            }
+
             MarketTransaction mtx = new MarketTransaction
             {
                 PersonalId = id,
@@ -92,6 +105,7 @@ namespace Bitar.Controllers
                 Coins = -(withdrawal.Amount + withdrawal.Fees),
                 TxId = result.ToString(),
                 Type = TransactionType.Withdrawal,
+                Rate = rate,
                 Status = TransactionStatus.Completed
             };
 
