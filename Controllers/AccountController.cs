@@ -99,7 +99,7 @@ namespace Bitar.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult> Island(XmlDocument document)
+        public async Task<ActionResult> Island([FromForm] XmlDocument document)
         {
             _logger.LogInformation("yeet0");
             _logger.LogInformation(document.Value);
