@@ -157,7 +157,7 @@ namespace Bitar
             });
 
             app.UseCors(builder => builder
-                .WithOrigins("https://bitar.is", "https://www.bitar.is", "http://localhost:4200")
+                .WithOrigins("https://bitar.is", "https://www.bitar.is", "http://localhost:4200", "https://innskraning.island.is")
                 .AllowAnyHeader()
                 .AllowAnyMethod()
                 .AllowCredentials());
