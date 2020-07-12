@@ -7,6 +7,7 @@ using System.Net;
 using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
+using System.Xml;
 using Bitar.Models;
 using Bitar.Models.Settings;
 using Bitar.Services;
@@ -95,6 +96,17 @@ namespace Bitar.Controllers
             }
 
             return Unauthorized();
+        }
+
+        [HttpPost]
+        public async Task<ActionResult> Island(XmlDocument document)
+        {
+            _logger.LogInformation("yeet0");
+            _logger.LogInformation(document.Value);
+            _logger.LogInformation("yeet1");
+            _logger.LogInformation(document.OuterXml);
+            _logger.LogInformation("yeet3");
+            return Ok("noice");
         }
 
         [HttpPost]
