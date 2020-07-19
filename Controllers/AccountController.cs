@@ -99,7 +99,7 @@ namespace Bitar.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult> Island([FromBody] TokenDTO tokenDTO)
+        public async Task<ActionResult> Island([FromForm] TokenDTO tokenDTO)
         {
             _logger.LogInformation("yeet token yeet");
             _logger.LogInformation(tokenDTO.Token);
