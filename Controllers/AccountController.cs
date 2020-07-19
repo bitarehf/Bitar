@@ -99,11 +99,10 @@ namespace Bitar.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult> Island([FromForm] string document)
+        public async Task<ActionResult> Island(TokenDTO tokenDTO)
         {
-            _logger.LogInformation("yeet0");
-            _logger.LogInformation(document);
-            _logger.LogInformation("yeet1");
+            _logger.LogInformation("yeet token yeet");
+            _logger.LogInformation(tokenDTO.Token);
             return Ok("noice");
         }
 
@@ -238,6 +237,12 @@ namespace Bitar.Controllers
 
         //     return new JwtSecurityTokenHandler().WriteToken(token);
         // }
+
+        public class TokenDTO
+        {
+            [Required]
+            public string Token { get; set; }
+        }
 
         public class LoginDTO
         {
