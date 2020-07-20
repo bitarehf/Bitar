@@ -6,5 +6,6 @@ namespace Bitar.Models
     public class ApplicationUser : IdentityUser
     {
         public DateTime RegistrationDate { get; set; }
+        public bool IdConfirmed { get; set; } = false;
     }
 }
