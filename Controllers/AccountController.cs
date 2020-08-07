@@ -103,7 +103,7 @@ namespace Bitar.Controllers
         {
             _logger.LogInformation("yeet token yeet");
             _logger.LogInformation(tokenDTO.Token);
-            return Ok("noice");
+            return Redirect("https://bitar.is/dashboard");
         }
 
         [HttpPost]
