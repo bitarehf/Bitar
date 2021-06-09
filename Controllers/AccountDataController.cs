@@ -182,19 +182,5 @@ namespace Bitar.Controllers
             BitcoinWitPubKeyAddress address = await _bitcoin.GetDepositAddress(id);
             return address.ToString();
         }
-
-        [HttpGet]
-        public async Task<ActionResult<decimal>> GetAddressBalance()
-        {
-            string id = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (id == null)
-            {
-                return NotFound("User not found");
-            }
-
-            BitcoinWitPubKeyAddress address = await _bitcoin.GetDepositAddress(id);
-            Money result = await _bitcoin.GetAddressBalance(address);
-            return result.ToDecimal(MoneyUnit.BTC);
-        }
     }
 }

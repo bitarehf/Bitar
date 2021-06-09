@@ -21,6 +21,7 @@ namespace Bitar.Services
         public ArionService(ILogger<ArionService> logger, HttpClient client)
         {
             _logger = logger;
+            client.BaseAddress = new Uri("https://arionbanki.is/Webservice/PortalCurrency.ashx");
             _client = client;
         }
 

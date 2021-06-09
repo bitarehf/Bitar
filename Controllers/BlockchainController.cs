@@ -17,22 +17,25 @@ namespace Bitar.Controllers
     [Route("[controller]/[action]")]
     [Authorize]
     [ApiController]
-    public class BitcoinController : ControllerBase
+    public class BlockchainController : ControllerBase
     {
-        private readonly ILogger<BitcoinController> _logger;
+        private readonly ILogger<BlockchainController> _logger;
         private readonly BitcoinService _bitcoin;
+        private readonly BlockchainService _blockchain;
         private readonly ApplicationDbContext _context;
         private readonly TickerService _ticker;
 
-        public BitcoinController(
-            ILogger<BitcoinController> logger,
+        public BlockchainController(
+            ILogger<BlockchainController> logger,
             ApplicationDbContext context,
             BitcoinService bitcoin,
+            BlockchainService blockchain,
             TickerService ticker)
         {
             _logger = logger;
             _context = context;
             _bitcoin = bitcoin;
+            _blockchain = blockchain;
             _ticker = ticker;
         }
 
@@ -125,7 +128,7 @@ namespace Bitar.Controllers
             }
 
             BitcoinWitPubKeyAddress address = await _bitcoin.GetDepositAddress(id);
-            Money result = await _bitcoin.GetAddressBalance(address);
+            Money result = await _blockchain.GetAddressBalance(address);
             return result.ToDecimal(MoneyUnit.BTC);
         }
     }

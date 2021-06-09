@@ -87,10 +87,9 @@ namespace Bitar
             services.Configure<LandsbankinnSettings>(Configuration.GetSection("LandsbankinnSettings"));
             services.Configure<KrakenSettings>(Configuration.GetSection("KrakenSettings"));
 
-            services.AddHttpClient<ArionService>(c =>
-            {
-                c.BaseAddress = new Uri("https://arionbanki.is/Webservice/PortalCurrency.ashx");
-            });
+            services.AddHttpClient<ArionService>();
+            services.AddHttpClient<BlockchainService>();
+
             services.AddScoped<MarketRepository>();
             services.AddSingleton<BitcoinService>();
             services.AddSingleton<LandsbankinnService>();
