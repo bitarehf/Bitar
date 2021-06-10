@@ -113,7 +113,6 @@ namespace Bitar.Controllers
             if (verified)
             {
                 var user = await _userManager.FindByIdAsync(token.Island.UserId);
-                user.
                 if (user == null)
                 {
                         return Unauthorized();
