@@ -98,6 +98,7 @@ namespace Bitar.Controllers
             return Unauthorized();
         }
 
+        [Authorize]
         [HttpPost]
         public async Task<ActionResult> Island([FromForm] TokenDTO tokenDTO)
         {
@@ -105,7 +106,6 @@ namespace Bitar.Controllers
             IslandLogin.IslandLogin token = new IslandLogin.IslandLogin(tokenDTO.Token);
             _logger.LogInformation(token.Token);
 
-            _logger.LogDebug(token.Island.Id);
             _logger.LogInformation(token.Island.UserId);
             _logger.LogInformation(token.Island.Authentication);
 
@@ -113,6 +113,7 @@ namespace Bitar.Controllers
             if (verified)
             {
                 var user = await _userManager.FindByIdAsync(token.Island.UserId);
+                user.
                 if (user == null)
                 {
                         return Unauthorized();
