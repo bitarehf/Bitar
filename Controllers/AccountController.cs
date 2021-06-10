@@ -102,8 +102,29 @@ namespace Bitar.Controllers
         public async Task<ActionResult> Island([FromForm] TokenDTO tokenDTO)
         {
             _logger.LogInformation("yeet token yeet");
-            _logger.LogInformation(tokenDTO.Token);
-            return Redirect("https://bitar.is/dashboard");
+            IslandLogin.IslandLogin token = new IslandLogin.IslandLogin(tokenDTO.Token);
+            _logger.LogInformation(token.Token);
+
+            bool verified = token.Verify();
+            if (verified)
+            {
+                
+                var user = await _userManager.FindByIdAsync(token.Island.UserId);
+                if (user == null)
+                {
+                        return Unauthorized();
+                }
+                user.IdConfirmed = true;
+                user.UserName = token.Island.Name;
+                user.PhoneNumber = token.Island.Mobile;
+                user.PhoneNumberConfirmed = true;
+                await _userManager.UpdateAsync(user);
+                return Redirect("https://bitar.is/dashboard");
+            }
+            else
+            {
+                return Unauthorized();
+            }
         }
 
         [HttpPost]
