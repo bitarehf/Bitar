@@ -98,15 +98,14 @@ namespace Bitar.Controllers
             return Unauthorized();
         }
 
-        [Authorize]
         [HttpPost]
         public async Task<ActionResult> Island([FromForm] TokenDTO tokenDTO)
         {
             _logger.LogInformation("yeet token yeet");
             IslandLogin.IslandLogin token = new IslandLogin.IslandLogin(tokenDTO.Token);
             _logger.LogInformation(token.Token);
-
             _logger.LogInformation(token.Island.UserId);
+            _logger.LogInformation(token.Island.Name);
             _logger.LogInformation(token.Island.Authentication);
 
             bool verified = token.Verify();
