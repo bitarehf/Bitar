@@ -54,7 +54,7 @@ namespace Bitar
                 options.Lockout.MaxFailedAccessAttempts = 10;
 
                 // User settings.
-                options.User.AllowedUserNameCharacters = "aábcdðeéfghiíjklmnoópqrstuvwxyýzþæöAÁBCDÐEÉFGHIÍJKLMNOÓPQRSTUVWXYÝZÞÆÖ0123456789-._@+";
+                options.User.AllowedUserNameCharacters = "aábcdðeéfghiíjklmnoópqrstuvwxyýzþæöAÁBCDÐEÉFGHIÍJKLMNOÓPQRSTUVWXYÝZÞÆÖ0123456789 -._@+";
                 options.User.RequireUniqueEmail = true;
             });
 
