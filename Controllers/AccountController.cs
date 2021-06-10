@@ -105,7 +105,8 @@ namespace Bitar.Controllers
             IslandLogin.IslandLogin token = new IslandLogin.IslandLogin(tokenDTO.Token);
             _logger.LogInformation(token.Token);
 
-            _logger.LogInformation(token.Island.Id);
+            _logger.LogDebug(token.Island.Id);
+            _logger.LogInformation(token.Island.UserId);
             _logger.LogInformation(token.Island.Authentication);
 
             bool verified = token.Verify();
