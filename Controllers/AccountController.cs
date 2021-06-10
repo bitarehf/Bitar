@@ -105,10 +105,12 @@ namespace Bitar.Controllers
             IslandLogin.IslandLogin token = new IslandLogin.IslandLogin(tokenDTO.Token);
             _logger.LogInformation(token.Token);
 
+            _logger.LogInformation(token.Island.Id);
+            _logger.LogInformation(token.Island.Authentication);
+
             bool verified = token.Verify();
             if (verified)
             {
-                
                 var user = await _userManager.FindByIdAsync(token.Island.UserId);
                 if (user == null)
                 {
