@@ -6,7 +6,7 @@
   <h1>Bakendi <a href="https://bitar.is/" target="_blank">bitar.is</a></h1>
   
   <a href="https://github.com/bitarehf/Bitar/actions" target="_blank">
-     <img src="https://github.com/bitarehf/Bitar/workflows/ASP.NET%20Core%20CI/badge.svg" alt="build status">
+     <img src="https://github.com/bitarehf/Bitar/workflows/.NET/badge.svg" alt="build status">
   </a>
   <br>
   <br>
