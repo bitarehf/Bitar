@@ -120,7 +120,7 @@ namespace Bitar.Controllers
                 }
 
                 //user.IdConfirmed = true;
-                user.UserName = token.Island.Name;
+                user.UserName = "Bitar ehf.";
                 //user.PhoneNumberConfirmed = true;
                 
                 var result = await _userManager.UpdateAsync(user);
