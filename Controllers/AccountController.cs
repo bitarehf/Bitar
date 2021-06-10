@@ -109,19 +109,30 @@ namespace Bitar.Controllers
             _logger.LogInformation(token.Island.Authentication);
 
             bool verified = token.Verify();
+            
             if (verified)
             {
                 var user = await _userManager.FindByIdAsync(token.Island.UserId);
+                
                 if (user == null)
                 {
-                        return Unauthorized();
+                    return Unauthorized();
                 }
+
                 user.IdConfirmed = true;
                 user.UserName = token.Island.Name;
-                user.PhoneNumber = token.Island.Mobile;
                 user.PhoneNumberConfirmed = true;
-                await _userManager.UpdateAsync(user);
-                return Redirect("https://bitar.is/dashboard");
+                
+                var result = await _userManager.UpdateAsync(user);
+                
+                if (result.Succeeded)
+                {
+                    return Redirect("https://bitar.is/dashboard");
+                }
+                else
+                {
+                    return BadRequest();
+                }
             }
             else
             {
