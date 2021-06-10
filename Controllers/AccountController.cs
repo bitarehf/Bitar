@@ -119,9 +119,9 @@ namespace Bitar.Controllers
                     return Unauthorized();
                 }
 
-                user.IdConfirmed = true;
-                user.UserName = token.Island.Name;
-                user.PhoneNumberConfirmed = true;
+                //user.IdConfirmed = true;
+                user.UserName = "Saevar"; //token.Island.Name;
+                //user.PhoneNumberConfirmed = true;
                 
                 var result = await _userManager.UpdateAsync(user);
                 
