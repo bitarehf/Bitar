@@ -195,7 +195,6 @@ namespace Bitar.Controllers
             if (!dilisense.IsSuccessStatusCode)
             {
                 _logger.LogCritical("Dilisense API is not working!");
-                _logger.LogCritical($"{dilisense.Content.ReadAsStringAsync()}");
             }
 
             Individual individual = JsonSerializer.Deserialize<Individual>(
