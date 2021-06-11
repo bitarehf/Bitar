@@ -10,7 +10,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Bitar.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20210611002235_FirstCreate")]
+    [Migration("20210611005148_FirstCreate")]
     partial class FirstCreate
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -139,7 +139,6 @@ namespace Bitar.Migrations
                         .HasColumnType("boolean");
 
                     b.Property<string>("PersonalId")
-                        .IsRequired()
                         .HasMaxLength(10)
                         .HasColumnType("character varying(10)");
 
@@ -371,9 +370,7 @@ namespace Bitar.Migrations
                 {
                     b.HasOne("Bitar.Models.AccountData", null)
                         .WithMany("KnowYourCustomer")
-                        .HasForeignKey("PersonalId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("PersonalId");
                 });
 
             modelBuilder.Entity("Bitar.Models.MarketTransaction", b =>

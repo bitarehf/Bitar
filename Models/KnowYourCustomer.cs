@@ -7,7 +7,6 @@ namespace Bitar.Models
     {
         public int Id { get; set; }
 
-        [Required]
         [StringLength(10, MinimumLength = 10)]
         public string PersonalId { get; set; }
 
@@ -20,7 +19,6 @@ namespace Bitar.Models
         [Required]
         public bool OwnerOfFunds { get; set; }
 
-        [Required]
         public DateTime Time { get; set; }
     }
 }

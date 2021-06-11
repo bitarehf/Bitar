@@ -72,7 +72,7 @@ namespace Bitar.Migrations
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    PersonalId = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: false),
+                    PersonalId = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: true),
                     Occupation = table.Column<string>(type: "text", nullable: false),
                     OriginOfFunds = table.Column<string>(type: "text", nullable: false),
                     OwnerOfFunds = table.Column<bool>(type: "boolean", nullable: false),
@@ -86,7 +86,7 @@ namespace Bitar.Migrations
                         column: x => x.PersonalId,
                         principalTable: "AccountData",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
