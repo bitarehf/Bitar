@@ -263,7 +263,7 @@ namespace Bitar.Controllers
 
                 var address = await _bitcoin.GetDepositAddress(id);
                 // Import Address to bitcoin node to keep track of it.
-                await _bitcoin.ImportAddress(address, id);
+                //await _bitcoin.ImportAddress(address, id);
 
             }
             catch (WebException)
