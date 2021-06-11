@@ -202,10 +202,12 @@ namespace Bitar.Controllers
 
             // Temp for testing.
             bool politicallyExposed = false;
-            if (individual.TotalHits >= 1)
+            if (((int)individual.TotalHits) >= 1)
             {
                 politicallyExposed = true;
             }
+
+            _logger.LogInformation(individual.TotalHits.ToString());
 
             var user = new ApplicationUser
             {
