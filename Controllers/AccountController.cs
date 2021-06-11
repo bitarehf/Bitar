@@ -203,7 +203,7 @@ namespace Bitar.Controllers
 
             // Temp for testing.
             bool politicallyExposed = false;
-            if ((individual.FoundRecords.Count()) >= 1)
+            if (individual.FoundRecords.Count() >= 1)
             {
                 politicallyExposed = true;
             }
