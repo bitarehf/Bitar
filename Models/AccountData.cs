@@ -33,5 +33,8 @@ namespace Bitar.Models
         [ConcurrencyCheck]
         [ForeignKey("PersonalId")]
         public virtual List<MarketTransaction> MarketTransactions { get; set; }
+
+        [ForeignKey("PersonalId")]
+        public virtual List<KnowYourCustomer> KnowYourCustomer { get; set; }
     }
 }

@@ -48,6 +48,7 @@ namespace Bitar.Controllers
             return await _context.AccountData
                 .Include(x => x.MarketTransactions)
                 .Include(x => x.Transactions)
+                .Include(x => x.KnowYourCustomer)
                 .FirstOrDefaultAsync(x => x.Id == id);
         }
 
@@ -181,6 +182,30 @@ namespace Bitar.Controllers
 
             BitcoinWitPubKeyAddress address = await _bitcoin.GetDepositAddress(id);
             return address.ToString();
+        }
+
+        // POST: api.bitar.is/AccountData/UpdateKnowYourCustomer
+        /// <summary>
+        /// Updates KYC.
+        /// </summary>
+        [HttpPost]
+        public async Task<ActionResult> UpdateKnowYourCustomer(KnowYourCustomer knowYourCustomer)
+        {
+            string id = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (id == null)
+            {
+                return NotFound("User not found");
+            }
+
+            var accountData = await _context.AccountData.FindAsync(id);
+
+            knowYourCustomer.PersonalId = id;
+            knowYourCustomer.Time = DateTime.Now;
+            accountData.KnowYourCustomer.Add(knowYourCustomer);
+
+            await _context.SaveChangesAsync();
+
+            return Ok(knowYourCustomer);
         }
     }
 }
