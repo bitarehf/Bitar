@@ -191,7 +191,7 @@ namespace Bitar.Controllers
         [HttpPost]
         public async Task<ActionResult> UpdateKnowYourCustomer(KnowYourCustomer knowYourCustomer)
         {
-            _logger.LogDebug("KYC update called");
+            _logger.LogInformation($"KYC updated called. {knowYourCustomer.Occupation} {knowYourCustomer.OriginOfFunds} {knowYourCustomer.OwnerOfFunds}");
             string id = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (id == null)
             {
