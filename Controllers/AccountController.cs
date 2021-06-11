@@ -208,8 +208,6 @@ namespace Bitar.Controllers
                 politicallyExposed = true;
             }
 
-            _logger.LogInformation(individual.FoundRecords.Count().ToString());
-
             var user = new ApplicationUser
             {
                 Id = register.Id,
