@@ -56,9 +56,15 @@ namespace Bitar.Migrations
                     b.Property<int>("AccessFailedCount")
                         .HasColumnType("integer");
 
+                    b.Property<string>("Address")
+                        .HasColumnType("text");
+
                     b.Property<string>("ConcurrencyStamp")
                         .IsConcurrencyToken()
                         .HasColumnType("text");
+
+                    b.Property<bool>("CriminalWatchlist")
+                        .HasColumnType("boolean");
 
                     b.Property<string>("Email")
                         .HasMaxLength(256)
@@ -68,6 +74,9 @@ namespace Bitar.Migrations
                         .HasColumnType("boolean");
 
                     b.Property<bool>("IdConfirmed")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("Institution")
                         .HasColumnType("boolean");
 
                     b.Property<bool>("LockoutEnabled")
@@ -93,8 +102,17 @@ namespace Bitar.Migrations
                     b.Property<bool>("PhoneNumberConfirmed")
                         .HasColumnType("boolean");
 
+                    b.Property<bool>("PoliticallyExposed")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("PostalCode")
+                        .HasColumnType("text");
+
                     b.Property<DateTime>("RegistrationDate")
                         .HasColumnType("timestamp without time zone");
+
+                    b.Property<bool>("SanctionList")
+                        .HasColumnType("boolean");
 
                     b.Property<string>("SecurityStamp")
                         .HasColumnType("text");
@@ -137,6 +155,7 @@ namespace Bitar.Migrations
                         .HasColumnType("boolean");
 
                     b.Property<string>("PersonalId")
+                        .IsRequired()
                         .HasMaxLength(10)
                         .HasColumnType("character varying(10)");
 
@@ -367,8 +386,10 @@ namespace Bitar.Migrations
             modelBuilder.Entity("Bitar.Models.KnowYourCustomer", b =>
                 {
                     b.HasOne("Bitar.Models.AccountData", null)
-                        .WithMany("KnowYourCustomer")
-                        .HasForeignKey("PersonalId");
+                        .WithMany("KnowYourCustomers")
+                        .HasForeignKey("PersonalId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("Bitar.Models.MarketTransaction", b =>
@@ -442,7 +463,7 @@ namespace Bitar.Migrations
 
             modelBuilder.Entity("Bitar.Models.AccountData", b =>
                 {
-                    b.Navigation("KnowYourCustomer");
+                    b.Navigation("KnowYourCustomers");
 
                     b.Navigation("MarketTransactions");
 

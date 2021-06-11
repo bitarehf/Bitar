@@ -7,6 +7,7 @@ namespace Bitar.Models
     {
         public int Id { get; set; }
 
+        [Required]
         [StringLength(10, MinimumLength = 10)]
         public string PersonalId { get; set; }
 

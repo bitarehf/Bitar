@@ -4,11 +4,15 @@ using System.ComponentModel.DataAnnotations;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Net;
+using System.Net.Http;
 using System.Security.Claims;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 using System.Xml;
 using Bitar.Models;
+using Bitar.Models.Dilisense;
+using Bitar.Models.JaModels;
 using Bitar.Models.Settings;
 using Bitar.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -28,6 +32,8 @@ namespace Bitar.Controllers
     {
         private readonly ILogger<AccountController> _logger;
         private readonly JwtSettings _options;
+        private readonly JaSettings _jaOptions;
+        private readonly DilisenseSettings _dilisenseOptions;
         private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly ApplicationDbContext _context;
@@ -37,6 +43,8 @@ namespace Bitar.Controllers
         public AccountController(
             ILogger<AccountController> logger,
             IOptions<JwtSettings> options,
+            IOptions<JaSettings> jaOptions,
+            IOptions<DilisenseSettings> dilisenseOptions,
             UserManager<ApplicationUser> userManager,
             SignInManager<ApplicationUser> signInManager,
             ApplicationDbContext context,
@@ -46,6 +54,8 @@ namespace Bitar.Controllers
         {
             _logger = logger;
             _options = options.Value;
+            _jaOptions = jaOptions.Value;
+            _dilisenseOptions = dilisenseOptions.Value;
             _userManager = userManager;
             _signInManager = signInManager;
             _context = context;
@@ -109,11 +119,11 @@ namespace Bitar.Controllers
             _logger.LogInformation(token.Island.Authentication);
 
             bool verified = token.Verify();
-            
+
             if (verified)
             {
                 var user = await _userManager.FindByIdAsync(token.Island.UserId);
-                
+
                 if (user == null)
                 {
                     return Unauthorized();
@@ -122,9 +132,9 @@ namespace Bitar.Controllers
                 user.IdConfirmed = true;
                 user.UserName = token.Island.Name;
                 user.PhoneNumberConfirmed = true;
-                
+
                 var result = await _userManager.UpdateAsync(user);
-                
+
                 if (result.Succeeded)
                 {
                     return Redirect("https://bitar.is/dashboard");
@@ -140,6 +150,7 @@ namespace Bitar.Controllers
             }
         }
 
+        // This needs cleaning, I was in a rush.
         [HttpPost]
         public async Task<ActionResult> Register(RegisterDTO register)
         {
@@ -150,12 +161,64 @@ namespace Bitar.Controllers
                 return Conflict("Account already exists");
             }
 
+            HttpClient client = new HttpClient();
+            client.DefaultRequestHeaders.Add("Authorization", _jaOptions.ApiKey);
+            var kennitalaRequest = await client.GetAsync($"https://api.ja.is/skra/v1/kennitolur/{register.Id}");
+            if (!kennitalaRequest.IsSuccessStatusCode)
+            {
+                _logger.LogCritical("Ja API is not working!");
+            }
+
+            KennitalaOverview kennitala = JsonSerializer.Deserialize<KennitalaOverview>(
+                await kennitalaRequest.Content.ReadAsStringAsync());
+
+            bool institution = false;
+            if (kennitala.KennitalaType == "business")
+            {
+                institution = true;
+            }
+
+            var personRequest = await client.GetAsync($"https://api.ja.is/skra/v1/people/{register.Id}");
+            if (!personRequest.IsSuccessStatusCode)
+            {
+                _logger.LogCritical("Ja API is not working!");
+            }
+
+            Person p = JsonSerializer.Deserialize<Person>(
+                await personRequest.Content.ReadAsStringAsync());
+
+            HttpClient c = new HttpClient();
+            client.DefaultRequestHeaders.Add("x-api-key", _dilisenseOptions.ApiKey);
+            string url = Uri.EscapeUriString($"https://api.dilisense.com/v1/checkIndividual?names={p.Name}");
+            _logger.LogInformation(url);
+            var dilisense = await c.GetAsync(url);
+            if (!dilisense.IsSuccessStatusCode)
+            {
+                _logger.LogCritical("Dilisense API is not working!");
+            }
+
+            Individual individual = JsonSerializer.Deserialize<Individual>(
+                await dilisense.Content.ReadAsStringAsync());
+
+            // Temp for testing.
+            bool politicallyExposed = false;
+            if (individual.TotalHits >= 1)
+            {
+                politicallyExposed = true;
+            }
+
             var user = new ApplicationUser
             {
                 Id = register.Id,
-                UserName = register.Id,
+                UserName = p.Name,
                 Email = register.Email,
-                RegistrationDate = DateTime.Now
+                RegistrationDate = DateTime.Now,
+                Institution = institution,
+                PostalCode = p.PermanentAddress.PostalCode.ToString(),
+                Address = p.PermanentAddress.Street.Dative,
+                PoliticallyExposed = politicallyExposed, // Temp for testing.
+                SanctionList = false, // Temp for testing.
+                CriminalWatchlist = false // Temp for testing.
             };
 
             _logger.LogDebug(
@@ -194,6 +257,7 @@ namespace Bitar.Controllers
                     Fee = 0.5m
                     // Derivation is automatically assigned an id.
                 };
+
                 await _context.AccountData.AddAsync(accountData);
                 await _context.SaveChangesAsync();
 

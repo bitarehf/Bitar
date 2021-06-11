@@ -48,7 +48,7 @@ namespace Bitar.Controllers
             return await _context.AccountData
                 .Include(x => x.MarketTransactions)
                 .Include(x => x.Transactions)
-                .Include(x => x.KnowYourCustomer)
+                .Include(x => x.KnowYourCustomers)
                 .FirstOrDefaultAsync(x => x.Id == id);
         }
 
@@ -198,16 +198,25 @@ namespace Bitar.Controllers
                 return NotFound("User not found");
             }
 
-            var accountData = await _context.AccountData.FindAsync(id);
+            var accountData = await _context.AccountData
+                .Include(x => x.KnowYourCustomers)
+                .FirstOrDefaultAsync(x => x.Id == id);
+
+            if (accountData == null)
+            {
+                return NotFound("User not found in database");
+            }
+
 
             knowYourCustomer.PersonalId = id;
             knowYourCustomer.Time = DateTime.Now;
-            accountData.KnowYourCustomer.Add(knowYourCustomer);
+
+            accountData.KnowYourCustomers.Add(knowYourCustomer);
 
             await _context.SaveChangesAsync();
-
             _logger.LogInformation($"KYC updated for user: {id}");
-            return Ok(knowYourCustomer);
+
+            return Ok();
         }
     }
 }

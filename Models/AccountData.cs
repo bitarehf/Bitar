@@ -35,6 +35,6 @@ namespace Bitar.Models
         public virtual List<MarketTransaction> MarketTransactions { get; set; }
 
         [ForeignKey("PersonalId")]
-        public virtual List<KnowYourCustomer> KnowYourCustomer { get; set; }
+        public virtual List<KnowYourCustomer> KnowYourCustomers { get; set; }
     }
 }

@@ -46,6 +46,12 @@ namespace Bitar.Migrations
                     Id = table.Column<string>(type: "text", nullable: false),
                     RegistrationDate = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
                     IdConfirmed = table.Column<bool>(type: "boolean", nullable: false),
+                    Institution = table.Column<bool>(type: "boolean", nullable: false),
+                    PostalCode = table.Column<string>(type: "text", nullable: true),
+                    Address = table.Column<string>(type: "text", nullable: true),
+                    PoliticallyExposed = table.Column<bool>(type: "boolean", nullable: false),
+                    CriminalWatchlist = table.Column<bool>(type: "boolean", nullable: false),
+                    SanctionList = table.Column<bool>(type: "boolean", nullable: false),
                     UserName = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
                     NormalizedUserName = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
                     Email = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
@@ -72,7 +78,7 @@ namespace Bitar.Migrations
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    PersonalId = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: true),
+                    PersonalId = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: false),
                     Occupation = table.Column<string>(type: "text", nullable: false),
                     OriginOfFunds = table.Column<string>(type: "text", nullable: false),
                     OwnerOfFunds = table.Column<bool>(type: "boolean", nullable: false),
@@ -86,7 +92,7 @@ namespace Bitar.Migrations
                         column: x => x.PersonalId,
                         principalTable: "AccountData",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(

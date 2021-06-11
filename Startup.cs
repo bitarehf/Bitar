@@ -86,6 +86,8 @@ namespace Bitar
             services.Configure<BitcoinSettings>(Configuration.GetSection("BitcoinSettings"));
             services.Configure<LandsbankinnSettings>(Configuration.GetSection("LandsbankinnSettings"));
             services.Configure<KrakenSettings>(Configuration.GetSection("KrakenSettings"));
+            services.Configure<JaSettings>(Configuration.GetSection("JaSettings"));
+            services.Configure<DilisenseSettings>(Configuration.GetSection("DilisenseSettings"));
 
             services.AddHttpClient<ArionService>();
             services.AddHttpClient<BlockchainService>();
