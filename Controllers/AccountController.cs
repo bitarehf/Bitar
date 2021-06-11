@@ -195,6 +195,7 @@ namespace Bitar.Controllers
             if (!dilisense.IsSuccessStatusCode)
             {
                 _logger.LogCritical("Dilisense API is not working!");
+                _logger.LogCritical($"{dilisense.Content.ReadAsStringAsync()}");
             }
 
             Individual individual = JsonSerializer.Deserialize<Individual>(
@@ -202,12 +203,12 @@ namespace Bitar.Controllers
 
             // Temp for testing.
             bool politicallyExposed = false;
-            if (((int)individual.TotalHits) >= 1)
+            if ((individual.FoundRecords.Count()) >= 1)
             {
                 politicallyExposed = true;
             }
 
-            _logger.LogInformation(individual.TotalHits.ToString());
+            _logger.LogInformation(individual.FoundRecords.Count().ToString());
 
             var user = new ApplicationUser
             {
