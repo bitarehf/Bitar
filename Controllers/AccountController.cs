@@ -39,6 +39,8 @@ namespace Bitar.Controllers
         private readonly ApplicationDbContext _context;
         private readonly BitcoinService _bitcoin;
         private readonly IConfiguration _configuration;
+        private readonly String _dilisenseApi = "https://api.dilisense.com/v1/";
+        private readonly String _jaApi = "https://api.ja.is/skra/v1";
 
         public AccountController(
             ILogger<AccountController> logger,
@@ -83,7 +85,7 @@ namespace Bitar.Controllers
 
             // Ensure account data has been created incase they
             // failed to be created when the account was registered.
-            //await CreateAccountData(user.Id);
+            // await CreateAccountData(user.Id);
 
             // Check the password but don't "sign in" (which would set a cookie).
             var result = await _signInManager.CheckPasswordSignInAsync(user, login.Password, false);
@@ -154,6 +156,17 @@ namespace Bitar.Controllers
         [HttpPost]
         public async Task<ActionResult> Register(RegisterDTO register)
         {
+            HttpClient jaClient = new HttpClient();
+            jaClient.DefaultRequestHeaders.Add("Authorization", _jaOptions.ApiKey);
+
+            HttpClient dilisenseClient = new HttpClient();
+            dilisenseClient.DefaultRequestHeaders.Add("x-api-key", _dilisenseOptions.ApiKey);
+
+            bool institution = false;
+            bool politicallyExposed = false;
+            bool sanctionList = false;
+            bool criminalWatchList = false;
+
             // Don't try to create a user that already exists.
             if (await _context.Users.FindAsync(register.Id) != null)
             {
@@ -161,65 +174,77 @@ namespace Bitar.Controllers
                 return Conflict("Account already exists");
             }
 
-            HttpClient client = new HttpClient();
-            client.DefaultRequestHeaders.Add("Authorization", _jaOptions.ApiKey);
-            var kennitalaRequest = await client.GetAsync($"https://api.ja.is/skra/v1/kennitolur/{register.Id}");
-            if (!kennitalaRequest.IsSuccessStatusCode)
+            
+            var kennitalaResponse = await jaClient.GetAsync($"{_jaApi}/kennitolur/{register.Id}");
+            if (!kennitalaResponse.IsSuccessStatusCode)
             {
                 _logger.LogCritical("Ja API is not working!");
             }
 
-            KennitalaOverview kennitala = JsonSerializer.Deserialize<KennitalaOverview>(
-                await kennitalaRequest.Content.ReadAsStringAsync());
-
-            bool institution = false;
-            if (kennitala.KennitalaType == "business")
+            var kennitalaResult = await kennitalaResponse.Content.ReadAsStringAsync();
+            var kennitalaOverview = JsonSerializer.Deserialize<KennitalaOverview>(kennitalaResult);
+            if (kennitalaOverview.KennitalaType == "business")
             {
                 institution = true;
             }
 
-            var personRequest = await client.GetAsync($"https://api.ja.is/skra/v1/people/{register.Id}");
-            if (!personRequest.IsSuccessStatusCode)
+            var personResponse = await jaClient.GetAsync($"{_jaApi}/people/{register.Id}");
+            if (!personResponse.IsSuccessStatusCode)
             {
-                _logger.LogCritical("Ja API is not working!");
+                _logger.LogCritical("Ja API is not working");
             }
 
-            Person p = JsonSerializer.Deserialize<Person>(
-                await personRequest.Content.ReadAsStringAsync());
+            var personResult = await personResponse.Content.ReadAsStringAsync();
+            var person = JsonSerializer.Deserialize<Person>(personResult);
 
-            HttpClient c = new HttpClient();
-            client.DefaultRequestHeaders.Add("x-api-key", _dilisenseOptions.ApiKey);
-            string url = Uri.EscapeUriString($"https://api.dilisense.com/v1/checkIndividual?names={p.Name}");
-            _logger.LogInformation(url);
-            var dilisense = await c.GetAsync(url);
+            string dilisenseUrl = Uri.EscapeUriString($"{_dilisenseApi}/checkIndividual?names{person.Name}&dob={person.DateOfBirth.ToString("dd/MM/yyyy")}");
+
+            var dilisense = await dilisenseClient.GetAsync(dilisenseUrl);
             if (!dilisense.IsSuccessStatusCode)
             {
-                _logger.LogCritical("Dilisense API is not working!");
+                _logger.LogCritical("Dilisense API is not working");
             }
 
             Individual individual = JsonSerializer.Deserialize<Individual>(
                 await dilisense.Content.ReadAsStringAsync());
 
-            // Temp for testing.
-            bool politicallyExposed = false;
-            // fuck it
-            if (p.Name == "Bjarni Benediktsson")
+            // Check through the Dilisense records for PEP/CRIMINAL/SANCTION.
+            if (individual.TotalHits > 0)
             {
-                politicallyExposed = true;
+                Console.WriteLine($"Total hits: {individual.TotalHits}");
+                foreach (var record in individual.FoundRecords)
+                {
+                    switch (record.SourceType)
+                    {
+                        case SourceType.CRIMINAL:
+                            _logger.LogInformation($"{record.Name} is on a criminal list");
+                            criminalWatchList = true;
+                            break;
+                        case SourceType.PEP:
+                            _logger.LogInformation($"{record.Name} is politically exposed");
+                            politicallyExposed = true;
+                            break;
+                        case SourceType.SANCTION:
+                            _logger.LogInformation($"{record.Name} is on a criminal list");
+                            sanctionList = true;
+                            break;
+                    }
+                }
             }
 
             var user = new ApplicationUser
             {
                 Id = register.Id,
-                UserName = p.Name,
+                UserName = person.Name,
                 Email = register.Email,
                 RegistrationDate = DateTime.Now,
                 Institution = institution,
-                PostalCode = p.PermanentAddress.PostalCode.ToString(),
-                Address = p.PermanentAddress.Street.Dative,
-                PoliticallyExposed = politicallyExposed, // Temp for testing.
-                SanctionList = false, // Temp for testing.
-                CriminalWatchlist = false // Temp for testing.
+                PostalCode = person.PermanentAddress.PostalCode.ToString(),
+                Address = person.PermanentAddress.Street.Dative,
+                DateOfBirth = person.DateOfBirth.DateTime,
+                PoliticallyExposed = politicallyExposed,
+                SanctionList = sanctionList,
+                CriminalWatchlist = criminalWatchList
             };
 
             _logger.LogDebug(
