@@ -19,7 +19,8 @@ namespace Bitar.Models.Dilisense
     public partial class FoundRecord
     {
         [JsonPropertyName("source_type")]
-        public string SourceType { get; set; }
+        [JsonConverter(typeof(JsonStringEnumConverter))]
+        public SourceType SourceType { get; set; }
 
         [JsonPropertyName("pep_type")]
         public string PepType { get; set; }
@@ -31,7 +32,7 @@ namespace Bitar.Models.Dilisense
         public string EntityType { get; set; }
 
         [JsonPropertyName("list_date")]
-        public long ListDate { get; set; }
+        public string ListDate { get; set; }
 
         [JsonPropertyName("gender")]
         public string Gender { get; set; }
@@ -119,5 +120,12 @@ namespace Bitar.Models.Dilisense
 
         [JsonPropertyName("other_information")]
         public string[] OtherInformation { get; set; }
+    }
+
+    public enum SourceType
+    {
+        CRIMINAL,
+        PEP,
+        SANCTION
     }
 }
