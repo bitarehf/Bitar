@@ -77,7 +77,7 @@ namespace Bitar.Services
 
                 if (transactions == null)
                 {
-                    _logger.LogCritical("No transactions received today.");
+                    _logger.LogWarning("No transactions received today.");
                     return;
                 }
 
