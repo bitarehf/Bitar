@@ -11,6 +11,7 @@ namespace Bitar.Models
         
         [Required]
         public bool Institution { get; set; }
+        public DateTime DateOfBirth { get; set; }
         public string PostalCode { get; set; }
         public string Address { get; set; }
         public bool PoliticallyExposed { get; set; }
