@@ -70,25 +70,24 @@ namespace Bitar.Controllers
         {
             if (!ModelState.IsValid)
             {
-                return BadRequest();
+                return BadRequest(ModelState.SelectMany(x => x.Value.Errors));
             }
 
+            // Abort if user already exists.
             var user = await _userManager.FindByIdAsync(login.User);
             if (user == null)
             {
                 user = await _userManager.FindByEmailAsync(login.User);
                 if (user == null)
                 {
-                    return Unauthorized();
+                    return Unauthorized("User does not exist");
                 }
             }
 
-            // Ensure account data has been created incase they
-            // failed to be created when the account was registered.
-            // await CreateAccountData(user.Id);
-
+            // FIXME: Enable lockoutOnFailure before launch.
             // Check the password but don't "sign in" (which would set a cookie).
             var result = await _signInManager.CheckPasswordSignInAsync(user, login.Password, false);
+            
             if (result.Succeeded)
             {
                 var principal = await _signInManager.CreateUserPrincipalAsync(user);
@@ -107,18 +106,13 @@ namespace Bitar.Controllers
                 return Ok(new JwtSecurityTokenHandler().WriteToken(token));
             }
 
-            return Unauthorized();
+            return Unauthorized(result);
         }
 
         [HttpPost]
         public async Task<ActionResult> Island([FromForm] TokenDTO tokenDTO)
         {
-            _logger.LogInformation("yeet token yeet");
             IslandLogin.IslandLogin token = new IslandLogin.IslandLogin(tokenDTO.Token);
-            _logger.LogInformation(token.Token);
-            _logger.LogInformation(token.Island.UserId);
-            _logger.LogInformation(token.Island.Name);
-            _logger.LogInformation(token.Island.Authentication);
 
             bool verified = token.Verify();
 
@@ -128,7 +122,7 @@ namespace Bitar.Controllers
 
                 if (user == null)
                 {
-                    return Unauthorized();
+                    return Conflict("User does not exist");
                 }
 
                 user.IdConfirmed = true;
@@ -143,12 +137,12 @@ namespace Bitar.Controllers
                 }
                 else
                 {
-                    return BadRequest();
+                    return BadRequest("Unable to update user data");
                 }
             }
             else
             {
-                return Unauthorized();
+                return Unauthorized("Verification failed");
             }
         }
 
@@ -167,13 +161,12 @@ namespace Bitar.Controllers
             bool sanctionList = false;
             bool criminalWatchList = false;
 
-            // Don't try to create a user that already exists.
+            // Abort if user already exists.
             if (await _context.Users.FindAsync(register.Id) != null)
             {
-                _logger.LogWarning($"Account already exists. Account id: {register.Id}");
+                _logger.LogWarning($"Registration, account already exists. Account id: {register.Id}");
                 return Conflict("Account already exists");
             }
-
             
             var kennitalaResponse = await jaClient.GetAsync($"{_jaApi}/kennitolur/{register.Id}");
             if (!kennitalaResponse.IsSuccessStatusCode)
@@ -267,7 +260,7 @@ namespace Bitar.Controllers
                 return await Login(login);
             }
 
-            return NotFound();
+            return NotFound(result);
         }
 
         private async Task CreateAccountData(string id)
