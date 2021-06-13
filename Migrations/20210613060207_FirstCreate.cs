@@ -47,6 +47,7 @@ namespace Bitar.Migrations
                     RegistrationDate = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
                     IdConfirmed = table.Column<bool>(type: "boolean", nullable: false),
                     Institution = table.Column<bool>(type: "boolean", nullable: false),
+                    DateOfBirth = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
                     PostalCode = table.Column<string>(type: "text", nullable: true),
                     Address = table.Column<string>(type: "text", nullable: true),
                     PoliticallyExposed = table.Column<bool>(type: "boolean", nullable: false),

@@ -66,6 +66,9 @@ namespace Bitar.Migrations
                     b.Property<bool>("CriminalWatchlist")
                         .HasColumnType("boolean");
 
+                    b.Property<DateTime>("DateOfBirth")
+                        .HasColumnType("timestamp without time zone");
+
                     b.Property<string>("Email")
                         .HasMaxLength(256)
                         .HasColumnType("character varying(256)");

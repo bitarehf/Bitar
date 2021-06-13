@@ -10,7 +10,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Bitar.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20210611125131_FirstCreate")]
+    [Migration("20210613060207_FirstCreate")]
     partial class FirstCreate
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -67,6 +67,9 @@ namespace Bitar.Migrations
 
                     b.Property<bool>("CriminalWatchlist")
                         .HasColumnType("boolean");
+
+                    b.Property<DateTime>("DateOfBirth")
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<string>("Email")
                         .HasMaxLength(256)
