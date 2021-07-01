@@ -8,6 +8,7 @@ using Bitar.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using Microsoft.AspNetCore.Identity;
 
 namespace Bitar.Controllers
 {
@@ -29,17 +30,20 @@ namespace Bitar.Controllers
             _asset = asset;
         }
 
+
         // POST: api.bitar.is/Market/Order
         [HttpPost]
         public async Task<ActionResult<string>> Order([FromBody] decimal amount)
-        {
-            string id = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (id == null)
+        {            
+            string accountIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (accountIdString == null)
             {
-                return NotFound("User not found.");
+                return BadRequest("AccountId missing from request");
             }
 
-            var result = await _market.Order(id, amount);
+            int accountId = int.Parse(accountIdString);
+
+            var result = await _market.Order(accountId, amount);
             if (result == null)
             {
                 return Conflict("Order failed.");

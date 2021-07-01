@@ -4,7 +4,7 @@ namespace Bitar.Models.Dilisense
 {
 
 
-    public partial class Individual
+    public partial class DilisenseEntity
     {
         [JsonPropertyName("timestamp")]
         public string Timestamp { get; set; }
@@ -120,6 +120,12 @@ namespace Bitar.Models.Dilisense
 
         [JsonPropertyName("other_information")]
         public string[] OtherInformation { get; set; }
+        
+        [JsonPropertyName("company_number")]
+        public string[] CompanyNumber { get; set; }
+
+        [JsonPropertyName("jurisdiction")]
+        public string[] Jurisdiction { get; set; }
     }
 
     public enum SourceType

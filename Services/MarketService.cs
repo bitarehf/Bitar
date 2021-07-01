@@ -45,7 +45,7 @@ namespace Bitar.Services
         public async Task StartAsync(CancellationToken cancellationToken)
         {
             _logger.LogInformation("MarketService is starting.");
-            
+
             await _asset.StartAsync(cancellationToken);
             await _landsbankinn.StartAsync(cancellationToken);
             await _ticker.StartAsync(cancellationToken);
@@ -85,39 +85,40 @@ namespace Bitar.Services
                 {
                     _logger.LogDebug(
                         $"Time: {transaction.Time}\n" +
-                        $"PersonalId: {transaction.PersonalId}\n" +
+                        $"AccountId: {transaction.AccountId}\n" +
                         $"skyring_tilvisunar: {transaction.Reference}\n" +
                         $"tekka_sedilnr: {transaction.ShortReference}\n" +
                         $"tilvisun: {transaction.PaymentDetail}\n" +
                         $"upphaed: {transaction.Amount}");
 
-                    AccountData accountData = await context.AccountData
+                    Account account = await context.Account
                         .Include(x => x.Transactions)
-                        .FirstOrDefaultAsync(x => x.Id == transaction.PersonalId);
-                    if (accountData == null)
+                        .FirstOrDefaultAsync(x => x.Id == transaction.AccountId);
+
+                    if (account == null)
                     {
-                        _logger.LogCritical($"Found a transaction from an unregistered user {transaction.PersonalId}");
+                        _logger.LogCritical($"Found a transaction from an unregistered user {transaction.AccountId}");
                         continue;
                     }
 
-                    if (accountData.Transactions == null)
+                    if (account.Transactions == null)
                     {
-                        _logger.LogCritical($"Found {transaction.PersonalId} first transaction");
-                        accountData.Transactions.Add(transaction);
-                        accountData.Balance += transaction.Amount;
+                        _logger.LogCritical($"Found {transaction.AccountId} first transaction");
+                        account.Transactions.Add(transaction);
+                        account.Balance += transaction.Amount;
                         await context.SaveChangesAsync();
                     }
-                    else if (!accountData.Transactions.Any(x =>
-                        x.PersonalId == transaction.PersonalId &&
+                    else if (!account.Transactions.Any(x =>
+                        x.AccountId == transaction.AccountId &&
                         x.Time == transaction.Time &&
                         x.Reference == transaction.Reference &&
                         x.ShortReference == transaction.ShortReference &&
                         x.PaymentDetail == transaction.PaymentDetail &&
                         x.Amount == transaction.Amount))
                     {
-                        _logger.LogCritical($"Found a new transaction from {transaction.PersonalId}");
-                        accountData.Transactions.Add(transaction);
-                        accountData.Balance += transaction.Amount;
+                        _logger.LogCritical($"Found a new transaction from {transaction.AccountId}");
+                        account.Transactions.Add(transaction);
+                        account.Balance += transaction.Amount;
                         await context.SaveChangesAsync();
                     }
                 }
@@ -131,22 +132,33 @@ namespace Bitar.Services
 
             if (tx == null) return null;
 
-            // Converts to the transaction to the transaction model we are using.
-            foreach (var transaction in tx)
+            using (var scope = _scopeFactory.CreateScope())
             {
-                if (transaction.faerslulykill != "01") continue; // Do not remove this line.
+                var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
-                transactions.Add(new Bitar.Models.Transaction
+
+
+                // Converts to the transaction to the transaction model we are using.
+                foreach (var transaction in tx)
                 {
-                    Time = transaction.bokunardags,
-                    PersonalId = transaction.kt_greidanda,
-                    Reference = transaction.tekka_sedilnr,
-                    ShortReference = transaction.tilvisun,
-                    PaymentDetail = transaction.skyring_tilvisunar,
-                    Amount = transaction.upphaed
-                });
-            }
+                    if (transaction.faerslulykill != "01") continue; // Do not remove this line.
 
+                    Account account = await context.Account
+                            .Include(x => x.Transactions)
+                            .FirstOrDefaultAsync(x => x.Kennitala == transaction.kt_greidanda);
+
+                    transactions.Add(new Bitar.Models.Transaction
+                    {
+                        AccountId = account.Id,
+                        Time = transaction.bokunardags,
+                        Kennitala = transaction.kt_greidanda,
+                        Reference = transaction.tekka_sedilnr,
+                        ShortReference = transaction.tilvisun,
+                        PaymentDetail = transaction.skyring_tilvisunar,
+                        Amount = transaction.upphaed
+                    });
+                }
+            }
             return transactions;
         }
     }

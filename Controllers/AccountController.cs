@@ -18,6 +18,7 @@ using Bitar.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -73,21 +74,17 @@ namespace Bitar.Controllers
                 return BadRequest(ModelState.SelectMany(x => x.Value.Errors));
             }
 
-            // Abort if user already exists.
-            var user = await _userManager.FindByIdAsync(login.User);
+            // Abort if user does not exist.
+            var user = await _context.Users.FirstOrDefaultAsync(x => x.Kennitala == login.User || x.Email == login.User);
             if (user == null)
             {
-                user = await _userManager.FindByEmailAsync(login.User);
-                if (user == null)
-                {
-                    return Unauthorized("User does not exist");
-                }
+                return Unauthorized("User does not exist");
             }
 
             // FIXME: Enable lockoutOnFailure before launch.
             // Check the password but don't "sign in" (which would set a cookie).
             var result = await _signInManager.CheckPasswordSignInAsync(user, login.Password, false);
-            
+
             if (result.Succeeded)
             {
                 var principal = await _signInManager.CreateUserPrincipalAsync(user);
@@ -150,95 +147,17 @@ namespace Bitar.Controllers
         [HttpPost]
         public async Task<ActionResult> Register(RegisterDTO register)
         {
-            HttpClient jaClient = new HttpClient();
-            jaClient.DefaultRequestHeaders.Add("Authorization", _jaOptions.ApiKey);
-
-            HttpClient dilisenseClient = new HttpClient();
-            dilisenseClient.DefaultRequestHeaders.Add("x-api-key", _dilisenseOptions.ApiKey);
-
-            bool institution = false;
-            bool politicallyExposed = false;
-            bool sanctionList = false;
-            bool criminalWatchList = false;
-
             // Abort if user already exists.
-            if (await _context.Users.FindAsync(register.Id) != null)
+            if (await _context.Users.FirstOrDefaultAsync(x => x.Kennitala == register.Id) != null)
             {
                 _logger.LogWarning($"Registration, account already exists. Account id: {register.Id}");
                 return Conflict("Account already exists");
             }
-            
-            var kennitalaResponse = await jaClient.GetAsync($"{_jaApi}/kennitolur/{register.Id}");
-            if (!kennitalaResponse.IsSuccessStatusCode)
-            {
-                _logger.LogCritical("Ja API is not working!");
-            }
 
-            var kennitalaResult = await kennitalaResponse.Content.ReadAsStringAsync();
-            var kennitalaOverview = JsonSerializer.Deserialize<KennitalaOverview>(kennitalaResult);
-            if (kennitalaOverview.KennitalaType == "business")
-            {
-                institution = true;
-            }
+            var user = await GetUserNationalRegistry(register.Id);
+            user.Kennitala = register.Id;
+            user.Email = register.Email;
 
-            var personResponse = await jaClient.GetAsync($"{_jaApi}/people/{register.Id}");
-            if (!personResponse.IsSuccessStatusCode)
-            {
-                _logger.LogCritical("Ja API is not working");
-            }
-
-            var personResult = await personResponse.Content.ReadAsStringAsync();
-            var person = JsonSerializer.Deserialize<Person>(personResult);
-
-            string dilisenseUrl = Uri.EscapeUriString($"{_dilisenseApi}/checkIndividual?names{person.Name}&dob={person.DateOfBirth.ToString("dd/MM/yyyy")}");
-
-            var dilisense = await dilisenseClient.GetAsync(dilisenseUrl);
-            if (!dilisense.IsSuccessStatusCode)
-            {
-                _logger.LogCritical("Dilisense API is not working");
-            }
-
-            Individual individual = JsonSerializer.Deserialize<Individual>(
-                await dilisense.Content.ReadAsStringAsync());
-
-            // Check through the Dilisense records for PEP/CRIMINAL/SANCTION.
-            if (individual.TotalHits > 0)
-            {
-                Console.WriteLine($"Total hits: {individual.TotalHits}");
-                foreach (var record in individual.FoundRecords)
-                {
-                    switch (record.SourceType)
-                    {
-                        case SourceType.CRIMINAL:
-                            _logger.LogInformation($"{record.Name} is on a criminal list");
-                            criminalWatchList = true;
-                            break;
-                        case SourceType.PEP:
-                            _logger.LogInformation($"{record.Name} is politically exposed");
-                            politicallyExposed = true;
-                            break;
-                        case SourceType.SANCTION:
-                            _logger.LogInformation($"{record.Name} is on a criminal list");
-                            sanctionList = true;
-                            break;
-                    }
-                }
-            }
-
-            var user = new ApplicationUser
-            {
-                Id = register.Id,
-                UserName = person.Name,
-                Email = register.Email,
-                RegistrationDate = DateTime.Now,
-                Institution = institution,
-                PostalCode = person.PermanentAddress.PostalCode.ToString(),
-                Address = person.PermanentAddress.Street.Dative,
-                DateOfBirth = person.DateOfBirth.DateTime,
-                PoliticallyExposed = politicallyExposed,
-                SanctionList = sanctionList,
-                CriminalWatchlist = criminalWatchList
-            };
 
             _logger.LogDebug(
                 $"Id: {register.Id}\n" +
@@ -249,7 +168,7 @@ namespace Bitar.Controllers
 
             if (result.Succeeded)
             {
-                await CreateAccountData(register.Id);
+                await CreateAccount(user);
 
                 var login = new LoginDTO()
                 {
@@ -263,35 +182,149 @@ namespace Bitar.Controllers
             return NotFound(result);
         }
 
-        private async Task CreateAccountData(string id)
+        private async Task<ApplicationUser> GetUserNationalRegistry(String kennitala)
         {
-            try
-            {
-                // Don't try to create account data if it already exists.
-                if (await _userManager.FindByIdAsync(id) == null) return;
+            var user = new ApplicationUser();
 
-                var accountData = new AccountData
+            HttpClient jaClient = new HttpClient();
+            jaClient.DefaultRequestHeaders.Add("Authorization", _jaOptions.ApiKey);
+
+
+            var kennitalaResponse = await jaClient.GetAsync($"{_jaApi}/kennitolur/{kennitala}");
+            if (!kennitalaResponse.IsSuccessStatusCode)
+            {
+                _logger.LogCritical("Ja API is not working!");
+            }
+
+            var kennitalaResult = await kennitalaResponse.Content.ReadAsStringAsync();
+            var kennitalaOverview = JsonSerializer.Deserialize<KennitalaOverview>(kennitalaResult);
+            if (kennitalaOverview.KennitalaType == "business")
+            {
+                var personResponse = await jaClient.GetAsync($"{_jaApi}/businesses/{kennitala}");
+                if (!personResponse.IsSuccessStatusCode)
                 {
-                    Id = id,
-                    Fee = 0.5m
-                    // Derivation is automatically assigned an id.
-                };
+                    _logger.LogCritical("Ja API is not working");
+                }
 
-                await _context.AccountData.AddAsync(accountData);
-                await _context.SaveChangesAsync();
+                var businessResult = await personResponse.Content.ReadAsStringAsync();
+                var business = JsonSerializer.Deserialize<Business>(businessResult);
 
-                var address = await _bitcoin.GetDepositAddress(id);
-                // Import Address to bitcoin node to keep track of it.
-                //await _bitcoin.ImportAddress(address, id);
+                user.UserName = business.FullName;
+                user.Institution = true;
+                user.PostalCode = business.LegalAddress.PostalCode.ToString();
+                user.Address = business.LegalAddress.Street.Nominative;
+                user.DateOfBirth = business.DateEstablished.DateTime;
+            }
+            else
+            {
+                var personResponse = await jaClient.GetAsync($"{_jaApi}/people/{kennitala}");
+                if (!personResponse.IsSuccessStatusCode)
+                {
+                    _logger.LogCritical("Ja API is not working");
+                }
+
+                var personResult = await personResponse.Content.ReadAsStringAsync();
+                var person = JsonSerializer.Deserialize<Person>(personResult);
+
+                user.UserName = person.Name;
+                user.Institution = false;
+                user.PostalCode = person.PermanentAddress.PostalCode.ToString();
+                user.Address = person.PermanentAddress.Street.Nominative;
+                user.DateOfBirth = person.DateOfBirth.DateTime;
+            }
+
+            return user;
+        }
+
+        // TODO: Add institution scan
+        private async Task<bool> ExecuteDilisenseScan(Account account)
+        {
+            string dilisenseUrl;
+            DilisenseRecord dilisenseRecord = new DilisenseRecord()
+            {
+                PoliticallyExposed = false,
+                SanctionList = false,
+                CriminalList = false
+            };
+
+            HttpClient dilisenseClient = new HttpClient();
+            dilisenseClient.DefaultRequestHeaders.Add("x-api-key", _dilisenseOptions.ApiKey);
+
+            if (account.Institution)
+            {
+                dilisenseUrl = Uri.EscapeUriString($"{_dilisenseApi}/checkEntity?names{account.Name}");
 
             }
-            catch (WebException)
+            else
             {
-                _logger.LogCritical("Failed to import address to bitcoin node. Is the bitcoin node down?");
+                dilisenseUrl = Uri.EscapeUriString($"{_dilisenseApi}/checkIndividual?names{account.Name}&dob={account.DateOfBirth.ToString("dd/MM/yyyy")}");
             }
-            catch (Exception e)
+
+            var dilisense = await dilisenseClient.GetAsync(dilisenseUrl);
+            if (!dilisense.IsSuccessStatusCode)
             {
-                _logger.LogError(e.ToString());
+                _logger.LogCritical("Dilisense API is not working");
+                return false;
+            }
+
+            DilisenseEntity individual = JsonSerializer.Deserialize<DilisenseEntity>(
+                await dilisense.Content.ReadAsStringAsync());
+
+            // Check through the Dilisense records for PEP/CRIMINAL/SANCTION.
+            if (individual.TotalHits > 0)
+            {
+                Console.WriteLine($"Total hits: {individual.TotalHits}");
+                foreach (var record in individual.FoundRecords)
+                {
+                    switch (record.SourceType)
+                    {
+                        case SourceType.CRIMINAL:
+                            _logger.LogInformation($"{record.Name} is on a criminal list");
+                            dilisenseRecord.CriminalList = true;
+                            break;
+                        case SourceType.PEP:
+                            _logger.LogInformation($"{record.Name} is politically exposed");
+                            dilisenseRecord.PoliticallyExposed = true;
+                            break;
+                        case SourceType.SANCTION:
+                            _logger.LogInformation($"{record.Name} is on a criminal list");
+                            dilisenseRecord.SanctionList = true;
+                            break;
+                    }
+                }
+            }
+
+
+            account.DilisenseRecords.Add(dilisenseRecord);
+            await _context.SaveChangesAsync();
+
+            return true;
+        }
+
+        private async Task CreateAccount(ApplicationUser user)
+        {
+            var account = new Account
+            {
+                Name = user.UserName,
+                Kennitala = user.Kennitala,
+                DateOfBirth = user.DateOfBirth,
+                Address = user.Address,
+                PostalCode = user.PostalCode,
+                Institution = user.Institution
+            };
+
+            var createdUser = await _context.Users
+                .Include(x => x.Accounts)
+                .FirstOrDefaultAsync(x => x.Id == user.Id);
+            
+            createdUser.Accounts.Add(account);
+            
+            await _context.SaveChangesAsync();
+
+            var success = await ExecuteDilisenseScan(account);
+            if (success == false)
+            {
+                _logger.LogCritical($"Dilisense scan failed for {account.Name} ({account.Kennitala})");
             }
         }
 

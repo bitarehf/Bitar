@@ -64,31 +64,33 @@ namespace Bitar.Controllers
                 return BadRequest("withdrawal fees cannot have more than 8 decimals");
             }
 
-            string id = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (id == null)
+            string accountIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (accountIdString == null)
             {
-                return NotFound("User not found");
+                return BadRequest("AccountId missing from request");
             }
 
-            var accountData = await _context.AccountData
-                .Include(x => x.MarketTransactions)
-                .FirstOrDefaultAsync(x => x.Id == id);
+            int accountId = int.Parse(accountIdString);
 
-            if (accountData == null)
+            var account = await _context.Account
+                .Include(x => x.MarketTransactions)
+                .FirstOrDefaultAsync(x => x.Id == accountId);
+
+            if (account == null)
             {
                 return NotFound("User not found in database");
             }
 
-            if (accountData.WithdrawalAddress == null)
+            if (account.WithdrawalAddress == null)
             {
                 return NotFound("User has not set a withdrawal address");
             }
 
-            var address = BitcoinAddress.Create(accountData.WithdrawalAddress, Network.Main);
+            var address = BitcoinAddress.Create(account.WithdrawalAddress, Network.Main);
             Money amount = Money.FromUnit(withdrawal.Amount, MoneyUnit.BTC);
             Money fees = Money.FromUnit(withdrawal.Fees, MoneyUnit.BTC);
 
-            var result = await _bitcoin.SendBitcoin(id, address, amount, fees);
+            var result = await _bitcoin.SendBitcoin(accountId, address, amount, fees);
             if (result == null)
             {
                 return Conflict("Failed to create/send transaction");
@@ -103,7 +105,7 @@ namespace Bitar.Controllers
 
             MarketTransaction mtx = new MarketTransaction
             {
-                PersonalId = id,
+                AccountId = accountId,
                 Time = DateTime.Now,
                 Coins = -(withdrawal.Amount + withdrawal.Fees),
                 TxId = result.ToString(),
@@ -112,7 +114,7 @@ namespace Bitar.Controllers
                 Status = TransactionStatus.Completed
             };
 
-            accountData.MarketTransactions.Add(mtx);
+            account.MarketTransactions.Add(mtx);
             await _context.SaveChangesAsync();
 
             return result.ToString();
@@ -121,13 +123,15 @@ namespace Bitar.Controllers
         [HttpGet]
         public async Task<ActionResult<decimal>> GetAddressBalance()
         {
-            string id = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (id == null)
+            string accountIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (accountIdString == null)
             {
-                return NotFound("User not found");
+                return BadRequest("AccountId missing from request");
             }
 
-            BitcoinWitPubKeyAddress address = await _bitcoin.GetDepositAddress(id);
+            int accountId = int.Parse(accountIdString);
+
+            BitcoinWitPubKeyAddress address = await _bitcoin.GetDepositAddress(accountId);
             Money result = await _blockchain.GetAddressBalance(address);
             return result.ToDecimal(MoneyUnit.BTC);
         }

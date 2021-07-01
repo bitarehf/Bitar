@@ -37,19 +37,22 @@ namespace Bitar.Controllers
 
         // GET: api.bitar.is/AccountData/GetAccountData
         [HttpGet]
-        public async Task<ActionResult<AccountData>> GetAccountData()
+        public async Task<ActionResult<Account>> GetAccountData()
         {
-            string id = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (id == null)
+            string accountIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (accountIdString == null)
             {
-                return NotFound("User not found");
+                return BadRequest("AccountId missing from request");
             }
 
-            return await _context.AccountData
+            int accountId = int.Parse(accountIdString);
+
+            return await _context.Account
                 .Include(x => x.MarketTransactions)
                 .Include(x => x.Transactions)
-                .Include(x => x.KnowYourCustomers)
-                .FirstOrDefaultAsync(x => x.Id == id);
+                .Include(x => x.DilisenseRecords)
+                .Include(x => x.KnowYourCustomerRecords)
+                .FirstOrDefaultAsync(x => x.Id == accountId);
         }
 
         // POST: api.bitar.is/AccountData/UpdateWithdrawalAddress
@@ -65,7 +68,7 @@ namespace Bitar.Controllers
                 return NotFound("User not found");
             }
 
-            var accountData = await _context.AccountData.FindAsync(id);
+            var accountData = await _context.Account.FindAsync(id);
             accountData.WithdrawalAddress = bitcoinAddress;
 
             await _context.SaveChangesAsync();
@@ -86,7 +89,7 @@ namespace Bitar.Controllers
                 return NotFound("User not found");
             }
 
-            var accountData = await _context.AccountData.FindAsync(id);
+            var accountData = await _context.Account.FindAsync(id);
             accountData.BankAccountNumber = bankAccountNumber;
 
             await _context.SaveChangesAsync();
@@ -101,22 +104,24 @@ namespace Bitar.Controllers
         [HttpPost]
         public async Task<ActionResult<decimal>> Withdraw([FromBody] decimal amount)
         {
-            string id = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (id == null)
+            string accountIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (accountIdString == null)
             {
-                return NotFound("User not found");
+                return BadRequest("AccountId missing from request");
             }
 
-            var accountData = await _context.AccountData
-                .Include(x => x.MarketTransactions)
-                .FirstOrDefaultAsync(x => x.Id == id);
+            int accountId = int.Parse(accountIdString);
 
-            if (accountData == null)
+            var account = await _context.Account
+                .Include(x => x.MarketTransactions)
+                .FirstOrDefaultAsync(x => x.Id == accountId);
+
+            if (account == null)
             {
                 return NotFound("User not found in database");
             }
 
-            if (accountData.BankAccountNumber == null)
+            if (account.BankAccountNumber == null)
             {
                 return NotFound("User has not set a bank account number");
             }
@@ -126,22 +131,22 @@ namespace Bitar.Controllers
                 return BadRequest("Invalid amount");
             }
 
-            if (accountData.Balance - amount >= 0)
+            if (account.Balance - amount >= 0)
             {
                 try
                 {
-                    _logger.LogCritical($"{accountData.Id} is withdrawing {amount} ISK to {accountData.BankAccountNumber}");
-                    accountData.Balance -= amount;
+                    _logger.LogCritical($"{account.Id} is withdrawing {amount} ISK to {account.BankAccountNumber}");
+                    account.Balance -= amount;
                     await _context.SaveChangesAsync();
 
-                    string hq = accountData.BankAccountNumber.Substring(0, 4);
-                    string hb = accountData.BankAccountNumber.Substring(4, 2);
-                    string num = accountData.BankAccountNumber.Substring(6, 6);
-                    bool result = _landsbankinn.Pay(hq, hb, num, accountData.Id, amount);
+                    string hq = account.BankAccountNumber.Substring(0, 4);
+                    string hb = account.BankAccountNumber.Substring(4, 2);
+                    string num = account.BankAccountNumber.Substring(6, 6);
+                    bool result = _landsbankinn.Pay(hq, hb, num, account.Kennitala, amount);
 
                     MarketTransaction mtx = new MarketTransaction
                     {
-                        PersonalId = id,
+                        AccountId = accountId,
                         Time = DateTime.Now,
                         Amount = -amount,
                         Type = TransactionType.Withdrawal,
@@ -154,12 +159,12 @@ namespace Bitar.Controllers
                         return Conflict("Failed to create/send transaction");
                     }
 
-                    accountData.MarketTransactions.Add(mtx);
+                    account.MarketTransactions.Add(mtx);
                     await _context.SaveChangesAsync();
 
                     _logger.LogCritical($"Withdrawal successful");
 
-                    return Ok(accountData.Balance);
+                    return Ok(account.Balance);
                 }
                 catch (Exception e)
                 {
@@ -174,13 +179,15 @@ namespace Bitar.Controllers
         [HttpGet]
         public async Task<ActionResult<string>> GetDepositAddress()
         {
-            string id = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (id == null)
+            string accountIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (accountIdString == null)
             {
-                return NotFound("User not found");
+                return BadRequest("AccountId missing from request");
             }
 
-            BitcoinWitPubKeyAddress address = await _bitcoin.GetDepositAddress(id);
+            int accountId = int.Parse(accountIdString);
+
+            BitcoinWitPubKeyAddress address = await _bitcoin.GetDepositAddress(accountId);
             return address.ToString();
         }
 
@@ -192,29 +199,31 @@ namespace Bitar.Controllers
         public async Task<ActionResult> UpdateKnowYourCustomer(KnowYourCustomer knowYourCustomer)
         {
             _logger.LogInformation($"KYC updated called. {knowYourCustomer.Occupation} {knowYourCustomer.OriginOfFunds} {knowYourCustomer.OwnerOfFunds}");
-            string id = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (id == null)
+            string accountIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (accountIdString == null)
             {
-                return NotFound("User not found");
+                return BadRequest("AccountId missing from request");
             }
 
-            var accountData = await _context.AccountData
-                .Include(x => x.KnowYourCustomers)
-                .FirstOrDefaultAsync(x => x.Id == id);
+            int accountId = int.Parse(accountIdString);
 
-            if (accountData == null)
+            var account = await _context.Account
+                .Include(x => x.KnowYourCustomerRecords)
+                .FirstOrDefaultAsync(x => x.Id == accountId);
+
+            if (account == null)
             {
                 return NotFound("User not found in database");
             }
 
 
-            knowYourCustomer.PersonalId = id;
+            knowYourCustomer.AccountId = accountId;
             knowYourCustomer.Time = DateTime.Now;
 
-            accountData.KnowYourCustomers.Add(knowYourCustomer);
+            account.KnowYourCustomerRecords.Add(knowYourCustomer);
 
             await _context.SaveChangesAsync();
-            _logger.LogInformation($"KYC updated for user: {id}");
+            _logger.LogInformation($"KYC updated for user: {accountId}");
 
             return Ok();
         }

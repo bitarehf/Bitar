@@ -8,6 +8,7 @@ using Bitar.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -93,6 +94,7 @@ namespace Bitar
             services.AddHttpClient<BlockchainService>();
 
             services.AddScoped<MarketRepository>();
+            services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
             services.AddSingleton<BitcoinService>();
             services.AddSingleton<LandsbankinnService>();
             services.AddSingleton<AssetService>();

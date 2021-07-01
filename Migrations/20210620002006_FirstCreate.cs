@@ -9,27 +9,40 @@ namespace Bitar.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.CreateTable(
-                name: "AccountData",
+                name: "Account",
                 columns: table => new
                 {
-                    Id = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: false),
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Name = table.Column<string>(type: "text", nullable: true),
+                    Kennitala = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: true),
                     WithdrawalAddress = table.Column<string>(type: "text", nullable: true),
                     BankAccountNumber = table.Column<string>(type: "text", nullable: true),
                     Derivation = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     Fee = table.Column<decimal>(type: "numeric", nullable: false),
-                    Balance = table.Column<decimal>(type: "numeric", nullable: false)
+                    Balance = table.Column<decimal>(type: "numeric", nullable: false),
+                    IdConfirmed = table.Column<bool>(type: "boolean", nullable: false),
+                    Institution = table.Column<bool>(type: "boolean", nullable: false),
+                    PostalCode = table.Column<string>(type: "text", nullable: true),
+                    Address = table.Column<string>(type: "text", nullable: true),
+                    DateOfBirth = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
+                    DateCreated = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
+                    DateUpdated = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
+                    CreatedBy = table.Column<int>(type: "integer", nullable: false),
+                    UpdatedBy = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_AccountData", x => x.Id);
+                    table.PrimaryKey("PK_Account", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
                 name: "AspNetRoles",
                 columns: table => new
                 {
-                    Id = table.Column<string>(type: "text", nullable: false),
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     Name = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
                     NormalizedName = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
                     ConcurrencyStamp = table.Column<string>(type: "text", nullable: true)
@@ -43,16 +56,18 @@ namespace Bitar.Migrations
                 name: "AspNetUsers",
                 columns: table => new
                 {
-                    Id = table.Column<string>(type: "text", nullable: false),
-                    RegistrationDate = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Kennitala = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: true),
+                    DateOfBirth = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
                     IdConfirmed = table.Column<bool>(type: "boolean", nullable: false),
                     Institution = table.Column<bool>(type: "boolean", nullable: false),
-                    DateOfBirth = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
                     PostalCode = table.Column<string>(type: "text", nullable: true),
                     Address = table.Column<string>(type: "text", nullable: true),
-                    PoliticallyExposed = table.Column<bool>(type: "boolean", nullable: false),
-                    CriminalWatchlist = table.Column<bool>(type: "boolean", nullable: false),
-                    SanctionList = table.Column<bool>(type: "boolean", nullable: false),
+                    DateCreated = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
+                    DateUpdated = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
+                    CreatedBy = table.Column<int>(type: "integer", nullable: false),
+                    UpdatedBy = table.Column<int>(type: "integer", nullable: false),
                     UserName = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
                     NormalizedUserName = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
                     Email = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
@@ -74,12 +89,35 @@ namespace Bitar.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "DilisenseRecord",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    AccountId = table.Column<int>(type: "integer", nullable: false),
+                    PoliticallyExposed = table.Column<bool>(type: "boolean", nullable: false),
+                    CriminalList = table.Column<bool>(type: "boolean", nullable: false),
+                    SanctionList = table.Column<bool>(type: "boolean", nullable: false),
+                    DateCreated = table.Column<DateTime>(type: "timestamp without time zone", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_DilisenseRecord", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_DilisenseRecord_Account_AccountId",
+                        column: x => x.AccountId,
+                        principalTable: "Account",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "KnowYourCustomer",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    PersonalId = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: false),
+                    AccountId = table.Column<int>(type: "integer", nullable: false),
                     Occupation = table.Column<string>(type: "text", nullable: false),
                     OriginOfFunds = table.Column<string>(type: "text", nullable: false),
                     OwnerOfFunds = table.Column<bool>(type: "boolean", nullable: false),
@@ -89,9 +127,9 @@ namespace Bitar.Migrations
                 {
                     table.PrimaryKey("PK_KnowYourCustomer", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_KnowYourCustomer_AccountData_PersonalId",
-                        column: x => x.PersonalId,
-                        principalTable: "AccountData",
+                        name: "FK_KnowYourCustomer_Account_AccountId",
+                        column: x => x.AccountId,
+                        principalTable: "Account",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -102,7 +140,7 @@ namespace Bitar.Migrations
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    PersonalId = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: false),
+                    AccountId = table.Column<int>(type: "integer", nullable: false),
                     Time = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
                     Rate = table.Column<decimal>(type: "numeric", nullable: false),
                     Coins = table.Column<decimal>(type: "numeric", nullable: false),
@@ -117,9 +155,9 @@ namespace Bitar.Migrations
                 {
                     table.PrimaryKey("PK_MarketTransaction", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_MarketTransaction_AccountData_PersonalId",
-                        column: x => x.PersonalId,
-                        principalTable: "AccountData",
+                        name: "FK_MarketTransaction_Account_AccountId",
+                        column: x => x.AccountId,
+                        principalTable: "Account",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -130,7 +168,8 @@ namespace Bitar.Migrations
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    PersonalId = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: false),
+                    AccountId = table.Column<int>(type: "integer", nullable: false),
+                    Kennitala = table.Column<string>(type: "text", nullable: true),
                     Time = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
                     Reference = table.Column<string>(type: "text", nullable: true),
                     ShortReference = table.Column<string>(type: "text", nullable: true),
@@ -141,9 +180,9 @@ namespace Bitar.Migrations
                 {
                     table.PrimaryKey("PK_Transaction", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Transaction_AccountData_PersonalId",
-                        column: x => x.PersonalId,
-                        principalTable: "AccountData",
+                        name: "FK_Transaction_Account_AccountId",
+                        column: x => x.AccountId,
+                        principalTable: "Account",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -154,7 +193,7 @@ namespace Bitar.Migrations
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    RoleId = table.Column<string>(type: "text", nullable: false),
+                    RoleId = table.Column<int>(type: "integer", nullable: false),
                     ClaimType = table.Column<string>(type: "text", nullable: true),
                     ClaimValue = table.Column<string>(type: "text", nullable: true)
                 },
@@ -170,12 +209,36 @@ namespace Bitar.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "AccountApplicationUser",
+                columns: table => new
+                {
+                    AccountsId = table.Column<int>(type: "integer", nullable: false),
+                    UsersId = table.Column<int>(type: "integer", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_AccountApplicationUser", x => new { x.AccountsId, x.UsersId });
+                    table.ForeignKey(
+                        name: "FK_AccountApplicationUser_Account_AccountsId",
+                        column: x => x.AccountsId,
+                        principalTable: "Account",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_AccountApplicationUser_AspNetUsers_UsersId",
+                        column: x => x.UsersId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "AspNetUserClaims",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    UserId = table.Column<string>(type: "text", nullable: false),
+                    UserId = table.Column<int>(type: "integer", nullable: false),
                     ClaimType = table.Column<string>(type: "text", nullable: true),
                     ClaimValue = table.Column<string>(type: "text", nullable: true)
                 },
@@ -197,7 +260,7 @@ namespace Bitar.Migrations
                     LoginProvider = table.Column<string>(type: "character varying(128)", maxLength: 128, nullable: false),
                     ProviderKey = table.Column<string>(type: "character varying(128)", maxLength: 128, nullable: false),
                     ProviderDisplayName = table.Column<string>(type: "text", nullable: true),
-                    UserId = table.Column<string>(type: "text", nullable: false)
+                    UserId = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -214,8 +277,8 @@ namespace Bitar.Migrations
                 name: "AspNetUserRoles",
                 columns: table => new
                 {
-                    UserId = table.Column<string>(type: "text", nullable: false),
-                    RoleId = table.Column<string>(type: "text", nullable: false)
+                    UserId = table.Column<int>(type: "integer", nullable: false),
+                    RoleId = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -238,7 +301,7 @@ namespace Bitar.Migrations
                 name: "AspNetUserTokens",
                 columns: table => new
                 {
-                    UserId = table.Column<string>(type: "text", nullable: false),
+                    UserId = table.Column<int>(type: "integer", nullable: false),
                     LoginProvider = table.Column<string>(type: "character varying(128)", maxLength: 128, nullable: false),
                     Name = table.Column<string>(type: "character varying(128)", maxLength: 128, nullable: false),
                     Value = table.Column<string>(type: "text", nullable: true)
@@ -253,6 +316,11 @@ namespace Bitar.Migrations
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_AccountApplicationUser_UsersId",
+                table: "AccountApplicationUser",
+                column: "UsersId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_AspNetRoleClaims_RoleId",
@@ -292,23 +360,31 @@ namespace Bitar.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_KnowYourCustomer_PersonalId",
+                name: "IX_DilisenseRecord_AccountId",
+                table: "DilisenseRecord",
+                column: "AccountId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_KnowYourCustomer_AccountId",
                 table: "KnowYourCustomer",
-                column: "PersonalId");
+                column: "AccountId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_MarketTransaction_PersonalId",
+                name: "IX_MarketTransaction_AccountId",
                 table: "MarketTransaction",
-                column: "PersonalId");
+                column: "AccountId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Transaction_PersonalId",
+                name: "IX_Transaction_AccountId",
                 table: "Transaction",
-                column: "PersonalId");
+                column: "AccountId");
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.DropTable(
+                name: "AccountApplicationUser");
+
             migrationBuilder.DropTable(
                 name: "AspNetRoleClaims");
 
@@ -323,6 +399,9 @@ namespace Bitar.Migrations
 
             migrationBuilder.DropTable(
                 name: "AspNetUserTokens");
+
+            migrationBuilder.DropTable(
+                name: "DilisenseRecord");
 
             migrationBuilder.DropTable(
                 name: "KnowYourCustomer");
@@ -340,7 +419,7 @@ namespace Bitar.Migrations
                 name: "AspNetUsers");
 
             migrationBuilder.DropTable(
-                name: "AccountData");
+                name: "Account");
         }
     }
 }

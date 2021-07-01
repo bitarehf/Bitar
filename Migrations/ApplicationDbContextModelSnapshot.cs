@@ -19,11 +19,30 @@ namespace Bitar.Migrations
                 .HasAnnotation("ProductVersion", "5.0.3")
                 .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
 
-            modelBuilder.Entity("Bitar.Models.AccountData", b =>
+            modelBuilder.Entity("AccountApplicationUser", b =>
                 {
-                    b.Property<string>("Id")
-                        .HasMaxLength(10)
-                        .HasColumnType("character varying(10)");
+                    b.Property<int>("AccountsId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("UsersId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("AccountsId", "UsersId");
+
+                    b.HasIndex("UsersId");
+
+                    b.ToTable("AccountApplicationUser");
+                });
+
+            modelBuilder.Entity("Bitar.Models.Account", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+
+                    b.Property<string>("Address")
+                        .HasColumnType("text");
 
                     b.Property<decimal>("Balance")
                         .IsConcurrencyToken()
@@ -31,6 +50,18 @@ namespace Bitar.Migrations
 
                     b.Property<string>("BankAccountNumber")
                         .HasColumnType("text");
+
+                    b.Property<int>("CreatedBy")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("DateCreated")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<DateTime>("DateOfBirth")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<DateTime>("DateUpdated")
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<int>("Derivation")
                         .ValueGeneratedOnAdd()
@@ -40,18 +71,67 @@ namespace Bitar.Migrations
                     b.Property<decimal>("Fee")
                         .HasColumnType("numeric");
 
+                    b.Property<bool>("IdConfirmed")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("Institution")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Kennitala")
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<string>("Name")
+                        .HasColumnType("text");
+
+                    b.Property<string>("PostalCode")
+                        .HasColumnType("text");
+
+                    b.Property<int>("UpdatedBy")
+                        .HasColumnType("integer");
+
                     b.Property<string>("WithdrawalAddress")
                         .HasColumnType("text");
 
                     b.HasKey("Id");
 
-                    b.ToTable("AccountData");
+                    b.ToTable("Account");
+                });
+
+            modelBuilder.Entity("Bitar.Models.ApplicationRole", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+
+                    b.Property<string>("ConcurrencyStamp")
+                        .IsConcurrencyToken()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Name")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<string>("NormalizedName")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("NormalizedName")
+                        .IsUnique()
+                        .HasDatabaseName("RoleNameIndex");
+
+                    b.ToTable("AspNetRoles");
                 });
 
             modelBuilder.Entity("Bitar.Models.ApplicationUser", b =>
                 {
-                    b.Property<string>("Id")
-                        .HasColumnType("text");
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
 
                     b.Property<int>("AccessFailedCount")
                         .HasColumnType("integer");
@@ -63,10 +143,16 @@ namespace Bitar.Migrations
                         .IsConcurrencyToken()
                         .HasColumnType("text");
 
-                    b.Property<bool>("CriminalWatchlist")
-                        .HasColumnType("boolean");
+                    b.Property<int>("CreatedBy")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("DateCreated")
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<DateTime>("DateOfBirth")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<DateTime>("DateUpdated")
                         .HasColumnType("timestamp without time zone");
 
                     b.Property<string>("Email")
@@ -81,6 +167,10 @@ namespace Bitar.Migrations
 
                     b.Property<bool>("Institution")
                         .HasColumnType("boolean");
+
+                    b.Property<string>("Kennitala")
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
 
                     b.Property<bool>("LockoutEnabled")
                         .HasColumnType("boolean");
@@ -105,23 +195,17 @@ namespace Bitar.Migrations
                     b.Property<bool>("PhoneNumberConfirmed")
                         .HasColumnType("boolean");
 
-                    b.Property<bool>("PoliticallyExposed")
-                        .HasColumnType("boolean");
-
                     b.Property<string>("PostalCode")
                         .HasColumnType("text");
-
-                    b.Property<DateTime>("RegistrationDate")
-                        .HasColumnType("timestamp without time zone");
-
-                    b.Property<bool>("SanctionList")
-                        .HasColumnType("boolean");
 
                     b.Property<string>("SecurityStamp")
                         .HasColumnType("text");
 
                     b.Property<bool>("TwoFactorEnabled")
                         .HasColumnType("boolean");
+
+                    b.Property<int>("UpdatedBy")
+                        .HasColumnType("integer");
 
                     b.Property<string>("UserName")
                         .HasMaxLength(256)
@@ -139,12 +223,45 @@ namespace Bitar.Migrations
                     b.ToTable("AspNetUsers");
                 });
 
+            modelBuilder.Entity("Bitar.Models.Dilisense.DilisenseRecord", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+
+                    b.Property<int>("AccountId")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("CriminalList")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime>("DateCreated")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<bool>("PoliticallyExposed")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("SanctionList")
+                        .HasColumnType("boolean");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AccountId");
+
+                    b.ToTable("DilisenseRecord");
+                });
+
             modelBuilder.Entity("Bitar.Models.KnowYourCustomer", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
                         .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+
+                    b.Property<int>("AccountId")
+                        .HasColumnType("integer");
 
                     b.Property<string>("Occupation")
                         .IsRequired()
@@ -157,17 +274,12 @@ namespace Bitar.Migrations
                     b.Property<bool>("OwnerOfFunds")
                         .HasColumnType("boolean");
 
-                    b.Property<string>("PersonalId")
-                        .IsRequired()
-                        .HasMaxLength(10)
-                        .HasColumnType("character varying(10)");
-
                     b.Property<DateTime>("Time")
                         .HasColumnType("timestamp without time zone");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("PersonalId");
+                    b.HasIndex("AccountId");
 
                     b.ToTable("KnowYourCustomer");
                 });
@@ -178,6 +290,9 @@ namespace Bitar.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
                         .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+
+                    b.Property<int>("AccountId")
+                        .HasColumnType("integer");
 
                     b.Property<decimal>("Amount")
                         .HasColumnType("numeric");
@@ -190,11 +305,6 @@ namespace Bitar.Migrations
 
                     b.Property<decimal>("Fee")
                         .HasColumnType("numeric");
-
-                    b.Property<string>("PersonalId")
-                        .IsRequired()
-                        .HasMaxLength(10)
-                        .HasColumnType("character varying(10)");
 
                     b.Property<decimal>("Rate")
                         .HasColumnType("numeric");
@@ -213,7 +323,7 @@ namespace Bitar.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("PersonalId");
+                    b.HasIndex("AccountId");
 
                     b.ToTable("MarketTransaction");
                 });
@@ -225,16 +335,17 @@ namespace Bitar.Migrations
                         .HasColumnType("integer")
                         .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
 
+                    b.Property<int>("AccountId")
+                        .HasColumnType("integer");
+
                     b.Property<decimal>("Amount")
                         .HasColumnType("numeric");
 
-                    b.Property<string>("PaymentDetail")
+                    b.Property<string>("Kennitala")
                         .HasColumnType("text");
 
-                    b.Property<string>("PersonalId")
-                        .IsRequired()
-                        .HasMaxLength(10)
-                        .HasColumnType("character varying(10)");
+                    b.Property<string>("PaymentDetail")
+                        .HasColumnType("text");
 
                     b.Property<string>("Reference")
                         .HasColumnType("text");
@@ -247,38 +358,12 @@ namespace Bitar.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("PersonalId");
+                    b.HasIndex("AccountId");
 
                     b.ToTable("Transaction");
                 });
 
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
-                {
-                    b.Property<string>("Id")
-                        .HasColumnType("text");
-
-                    b.Property<string>("ConcurrencyStamp")
-                        .IsConcurrencyToken()
-                        .HasColumnType("text");
-
-                    b.Property<string>("Name")
-                        .HasMaxLength(256)
-                        .HasColumnType("character varying(256)");
-
-                    b.Property<string>("NormalizedName")
-                        .HasMaxLength(256)
-                        .HasColumnType("character varying(256)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("NormalizedName")
-                        .IsUnique()
-                        .HasDatabaseName("RoleNameIndex");
-
-                    b.ToTable("AspNetRoles");
-                });
-
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<int>", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -291,9 +376,8 @@ namespace Bitar.Migrations
                     b.Property<string>("ClaimValue")
                         .HasColumnType("text");
 
-                    b.Property<string>("RoleId")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.Property<int>("RoleId")
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -302,7 +386,7 @@ namespace Bitar.Migrations
                     b.ToTable("AspNetRoleClaims");
                 });
 
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<string>", b =>
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<int>", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -315,9 +399,8 @@ namespace Bitar.Migrations
                     b.Property<string>("ClaimValue")
                         .HasColumnType("text");
 
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.Property<int>("UserId")
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -326,7 +409,7 @@ namespace Bitar.Migrations
                     b.ToTable("AspNetUserClaims");
                 });
 
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<string>", b =>
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<int>", b =>
                 {
                     b.Property<string>("LoginProvider")
                         .HasMaxLength(128)
@@ -339,9 +422,8 @@ namespace Bitar.Migrations
                     b.Property<string>("ProviderDisplayName")
                         .HasColumnType("text");
 
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.Property<int>("UserId")
+                        .HasColumnType("integer");
 
                     b.HasKey("LoginProvider", "ProviderKey");
 
@@ -350,13 +432,13 @@ namespace Bitar.Migrations
                     b.ToTable("AspNetUserLogins");
                 });
 
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<string>", b =>
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<int>", b =>
                 {
-                    b.Property<string>("UserId")
-                        .HasColumnType("text");
+                    b.Property<int>("UserId")
+                        .HasColumnType("integer");
 
-                    b.Property<string>("RoleId")
-                        .HasColumnType("text");
+                    b.Property<int>("RoleId")
+                        .HasColumnType("integer");
 
                     b.HasKey("UserId", "RoleId");
 
@@ -365,10 +447,10 @@ namespace Bitar.Migrations
                     b.ToTable("AspNetUserRoles");
                 });
 
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<string>", b =>
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<int>", b =>
                 {
-                    b.Property<string>("UserId")
-                        .HasColumnType("text");
+                    b.Property<int>("UserId")
+                        .HasColumnType("integer");
 
                     b.Property<string>("LoginProvider")
                         .HasMaxLength(128)
@@ -386,43 +468,67 @@ namespace Bitar.Migrations
                     b.ToTable("AspNetUserTokens");
                 });
 
+            modelBuilder.Entity("AccountApplicationUser", b =>
+                {
+                    b.HasOne("Bitar.Models.Account", null)
+                        .WithMany()
+                        .HasForeignKey("AccountsId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Bitar.Models.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("UsersId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Bitar.Models.Dilisense.DilisenseRecord", b =>
+                {
+                    b.HasOne("Bitar.Models.Account", null)
+                        .WithMany("DilisenseRecords")
+                        .HasForeignKey("AccountId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Bitar.Models.KnowYourCustomer", b =>
                 {
-                    b.HasOne("Bitar.Models.AccountData", null)
-                        .WithMany("KnowYourCustomers")
-                        .HasForeignKey("PersonalId")
+                    b.HasOne("Bitar.Models.Account", null)
+                        .WithMany("KnowYourCustomerRecords")
+                        .HasForeignKey("AccountId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 
             modelBuilder.Entity("Bitar.Models.MarketTransaction", b =>
                 {
-                    b.HasOne("Bitar.Models.AccountData", null)
+                    b.HasOne("Bitar.Models.Account", null)
                         .WithMany("MarketTransactions")
-                        .HasForeignKey("PersonalId")
+                        .HasForeignKey("AccountId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 
             modelBuilder.Entity("Bitar.Models.Transaction", b =>
                 {
-                    b.HasOne("Bitar.Models.AccountData", null)
+                    b.HasOne("Bitar.Models.Account", null)
                         .WithMany("Transactions")
-                        .HasForeignKey("PersonalId")
+                        .HasForeignKey("AccountId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<int>", b =>
                 {
-                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
+                    b.HasOne("Bitar.Models.ApplicationRole", null)
                         .WithMany()
                         .HasForeignKey("RoleId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<string>", b =>
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<int>", b =>
                 {
                     b.HasOne("Bitar.Models.ApplicationUser", null)
                         .WithMany()
@@ -431,7 +537,7 @@ namespace Bitar.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<string>", b =>
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<int>", b =>
                 {
                     b.HasOne("Bitar.Models.ApplicationUser", null)
                         .WithMany()
@@ -440,9 +546,9 @@ namespace Bitar.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<string>", b =>
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<int>", b =>
                 {
-                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
+                    b.HasOne("Bitar.Models.ApplicationRole", null)
                         .WithMany()
                         .HasForeignKey("RoleId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -455,7 +561,7 @@ namespace Bitar.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<string>", b =>
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<int>", b =>
                 {
                     b.HasOne("Bitar.Models.ApplicationUser", null)
                         .WithMany()
@@ -464,9 +570,11 @@ namespace Bitar.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("Bitar.Models.AccountData", b =>
+            modelBuilder.Entity("Bitar.Models.Account", b =>
                 {
-                    b.Navigation("KnowYourCustomers");
+                    b.Navigation("DilisenseRecords");
+
+                    b.Navigation("KnowYourCustomerRecords");
 
                     b.Navigation("MarketTransactions");
 

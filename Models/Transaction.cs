@@ -9,8 +9,8 @@ namespace Bitar.Models
         public int Id { get; set; }
 
         [Required]
-        [StringLength(10, MinimumLength = 10)]
-        public string PersonalId { get; set; }
+        public int AccountId { get; set; }
+        public string Kennitala { get; set; }
 
         [Required]
         public DateTime Time { get; set; }

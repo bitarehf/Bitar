@@ -37,8 +37,8 @@ namespace Bitar.Services
                 Server = _options.Server,
                 UserPassword = new NetworkCredential
                 {
-                UserName = _options.Username,
-                Password = _options.Password
+                    UserName = _options.Username,
+                    Password = _options.Password
                 }
             };
 
@@ -46,16 +46,16 @@ namespace Bitar.Services
         }
 
         /// <summary>
-        /// Checks whether or we can send the specified amount <paramref name="amount"/> of bitcoin to 
+        /// Checks whether we can send the specified amount <paramref name="amount"/> of bitcoin to 
         /// the wallet of the user with the Id <paramref name="id"/> parameter.
         /// </summary>
         /// <param name="id">Id of the receiver.</param>
         /// <param name="money">Amount of bitcoin to send.</param>
-        public async Task<bool> BitarCanMakePayment(string id, Money amount)
+        public async Task<bool> BitarCanMakePayment(int id, Money amount)
         {
             try
             {
-                var accountData = await GetAccountData(id);
+                var account = await GetAccount(id);
 
                 ExtKey bitarKey = _masterKey.Derive(new KeyPath($"m/84'/0'/0'/0/0"));
                 var sender = bitarKey.PrivateKey.PubKey.GetSegwitAddress(Network.Main);
@@ -146,29 +146,23 @@ namespace Bitar.Services
         /// </summary>
         /// <param name="id">Id of the receiver.</param>
         /// <param name="money">Amount of bitcoin to send.</param>
-        public async Task<bool> CanMakePayment(string id, Money amount)
+        public async Task<bool> CanMakePayment(int id, Money amount)
         {
             try
             {
-                var accountData = await GetAccountData(id);
+                var account = await GetAccount(id);
 
                 ExtKey bitarKey = _masterKey.Derive(new KeyPath($"m/84'/0'/0'/0/0"));
                 var sender = bitarKey.PrivateKey.PubKey.GetSegwitAddress(Network.Main);
 
-                ExtKey key = _masterKey.Derive(new KeyPath($"m/84'/0'/{accountData.Derivation}'/0/0"));
+                ExtKey key = _masterKey.Derive(new KeyPath($"m/84'/0'/{account.Derivation}'/0/0"));
                 var receiver = key.PrivateKey.PubKey.GetSegwitAddress(Network.Main);
 
                 UnspentCoin[] unspentCoins;
-                if (id == "4708180420")
-                {
-                    _logger.LogCritical("Bitar ehf. transaction");
-                    unspentCoins = await _client.ListUnspentAsync(0, int.MaxValue, sender);
-                }
-                else
-                {
-                    _logger.LogCritical("Normal transaction");
-                    unspentCoins = await _client.ListUnspentAsync(6, int.MaxValue, sender);
-                }
+
+                _logger.LogCritical("Normal transaction");
+                unspentCoins = await _client.ListUnspentAsync(6, int.MaxValue, sender);
+
 
                 if (unspentCoins == null)
                 {
@@ -254,15 +248,15 @@ namespace Bitar.Services
             await _client.ImportAddressAsync(bitcoinAddress, id, false);
         }
 
-        public async Task<AccountData> GetAccountData(string id)
+        public async Task<Account> GetAccount(int id)
         {
             try
             {
-                using(var scope = _scopeFactory.CreateScope())
+                using (var scope = _scopeFactory.CreateScope())
                 {
                     var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
-                    return await context.AccountData.FindAsync(id);
+                    return await context.Account.FindAsync(id);
                 }
             }
             catch (Exception e)
@@ -273,13 +267,13 @@ namespace Bitar.Services
             return null;
         }
 
-        public async Task<BitcoinWitPubKeyAddress> GetDepositAddress(string id)
+        public async Task<BitcoinWitPubKeyAddress> GetDepositAddress(int id)
         {
-            var accountData = await GetAccountData(id);
+            var account = await GetAccount(id);
 
             // BIP84 - Derivation scheme for P2WPKH based accounts.
             // m / 84' / coin_type' / account' / change / address
-            ExtKey key = _masterKey.Derive(new KeyPath($"m/84'/0'/{accountData.Derivation}'/0/0"));
+            ExtKey key = _masterKey.Derive(new KeyPath($"m/84'/0'/{account.Derivation}'/0/0"));
             return key.PrivateKey.PubKey.GetSegwitAddress(Network.Main);
         }
 
@@ -294,25 +288,19 @@ namespace Bitar.Services
         /// <remarks>
         /// Change address is the same as the sender address.
         /// </remarks>
-        public async Task<uint256> SendBitcoin(string id, BitcoinAddress receiver, Money amount, Money fees)
+        public async Task<uint256> SendBitcoin(int id, BitcoinAddress receiver, Money amount, Money fees)
         {
             try
             {
-                var accountData = await GetAccountData(id);
+                var account = await GetAccount(id);
 
-                ExtKey key = _masterKey.Derive(new KeyPath($"m/84'/0'/{accountData.Derivation}'/0/0"));
+                ExtKey key = _masterKey.Derive(new KeyPath($"m/84'/0'/{account.Derivation}'/0/0"));
                 var sender = key.PrivateKey.PubKey.GetSegwitAddress(Network.Main);
 
                 UnspentCoin[] unspentCoins;
 
-                if (id == "4708180420")
-                {
-                    unspentCoins = await _client.ListUnspentAsync(0, int.MaxValue, sender);
-                }
-                else
-                {
-                    unspentCoins = await _client.ListUnspentAsync(6, int.MaxValue, sender);
-                }
+                unspentCoins = await _client.ListUnspentAsync(6, int.MaxValue, sender);
+
 
                 if (unspentCoins == null)
                 {
@@ -383,34 +371,29 @@ namespace Bitar.Services
         /// Sends specified amount of bitcoin to an address.
         /// Change address is the same as the sender address.
         /// </summary>
-        /// <param name="id">Id of the sender.</param>
+        /// <param name="accountId">AccountId of the sender.</param>
         /// <param name="receiver">Bitcoin address to send the money to.</param>
         /// <param name="money">Amount of bitcoin to send.</param>
         /// <param name="fees">Amount of fees to be included in the transaction.</param>
         /// <remarks>
         /// Change address is the same as the sender address.
         /// </remarks>
-        public async Task<uint256> SendBitcoin(string id, BitcoinAddress receiver, Money amount, int blocks)
+        public async Task<uint256> SendBitcoin(int accountId, BitcoinAddress receiver, Money amount, int blocks)
         {
             try
             {
-                var accountData = await GetAccountData(id);
+                var account = await GetAccount(accountId);
 
                 var rate = await _client.EstimateSmartFeeAsync(blocks, EstimateSmartFeeMode.Economical);
                 _logger.LogCritical($"Estimated fee rate: {rate.FeeRate}");
 
-                ExtKey key = _masterKey.Derive(new KeyPath($"m/84'/0'/{accountData.Derivation}'/0/0"));
+                ExtKey key = _masterKey.Derive(new KeyPath($"m/84'/0'/{account.Derivation}'/0/0"));
                 var sender = key.PrivateKey.PubKey.GetSegwitAddress(Network.Main);
 
                 UnspentCoin[] unspentCoins;
-                if (id == "4708180420")
-                {
-                    unspentCoins = await _client.ListUnspentAsync(0, int.MaxValue, sender);
-                }
-                else
-                {
-                    unspentCoins = await _client.ListUnspentAsync(6, int.MaxValue, sender);
-                }
+
+                unspentCoins = await _client.ListUnspentAsync(6, int.MaxValue, sender);
+
 
                 if (unspentCoins == null)
                 {
@@ -480,16 +463,14 @@ namespace Bitar.Services
             return null;
         }
 
-        public async Task<Money> CalculateFees(string id, BitcoinAddress receiver, Money amount, int blocks)
+        public async Task<Money> CalculateFees(Account account, BitcoinAddress receiver, Money amount, int blocks)
         {
             try
             {
-                var accountData = await GetAccountData(id);
-
                 var rate = await EstimateSmartFee(blocks);
                 _logger.LogCritical($"Estimated fee rate: {rate}");
 
-                ExtKey key = _masterKey.Derive(new KeyPath($"m/84'/0'/{accountData.Derivation}'/0/0"));
+                ExtKey key = _masterKey.Derive(new KeyPath($"m/84'/0'/{account.Derivation}'/0/0"));
                 var sender = key.PrivateKey.PubKey.GetSegwitAddress(Network.Main);
                 var unspentCoins = await _client.ListUnspentAsync(6, int.MaxValue, sender);
 

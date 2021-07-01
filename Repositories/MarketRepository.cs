@@ -24,11 +24,11 @@ namespace Bitar.Repositories
             _context = context;
             _serviceProvider = serviceProvider;
         }
-        public async Task<uint256> Order(string id, decimal isk)
+        public async Task<uint256> Order(int accountId, decimal isk)
         {
             MarketTransaction mtx = new MarketTransaction
             {
-                PersonalId = id,
+                AccountId = accountId,
                 Time = DateTime.Now,
                 Amount = -isk,
                 Type = TransactionType.Buy
@@ -36,17 +36,17 @@ namespace Bitar.Repositories
 
             try
             {
-                var accountData = await _context.AccountData
+                var account = await _context.Account
                     .Include(x => x.MarketTransactions)
-                    .FirstOrDefaultAsync(x => x.Id == id);
+                    .FirstOrDefaultAsync(x => x.Id == accountId);
 
-                if (accountData == null)
+                if (account == null)
                 {
-                    _logger.LogCritical($"Order cancelled because no account with id: {id} was found");
+                    _logger.LogCritical($"Order cancelled because no account with id: {accountId} was found");
                     return null;
                 }
 
-                mtx.Fee = -Math.Round(isk * (accountData.Fee / 100));
+                mtx.Fee = -Math.Round(isk * (account.Fee / 100));
 
                 decimal rate = Decimal.Zero;
 
@@ -62,7 +62,7 @@ namespace Bitar.Repositories
                     {
                         _logger.LogCritical("Order cancelled because market is closed.");
                         mtx.Status = TransactionStatus.Rejected;
-                        accountData.MarketTransactions.Add(mtx);
+                        account.MarketTransactions.Add(mtx);
                         await _context.SaveChangesAsync();
                         return null;
                     }
@@ -74,33 +74,34 @@ namespace Bitar.Repositories
                 {
                     _logger.LogCritical("Order cancelled because rate value was zero, this should never happen.");
                     mtx.Status = TransactionStatus.Rejected;
-                    accountData.MarketTransactions.Add(mtx);
+                    account.MarketTransactions.Add(mtx);
                     await _context.SaveChangesAsync();
                     return null;
                 }
 
                 Money coins = Money.Coins(
-                    Math.Round(isk / rate * (1 - accountData.Fee / 100), 8, MidpointRounding.ToZero));
+                    Math.Round(isk / rate * (1 - account.Fee / 100), 8, MidpointRounding.ToZero));
                 mtx.Coins = coins.ToDecimal(MoneyUnit.BTC);
-                _logger.LogDebug($"Id: {id} Coins: {coins} ISK: {isk} Rate: {rate} Account Balance: {accountData.Balance}");
+                _logger.LogDebug($"Id: {accountId} Coins: {coins} ISK: {isk} Rate: {rate} Account Balance: {account.Balance}");
 
-                if (accountData.Balance >= isk)
+                if (account.Balance >= isk)
                 {
-                    mtx.Balance = accountData.Balance - isk;
-                    _logger.LogDebug($"{id} has sufficient balance for the order");
+                    mtx.Balance = account.Balance - isk;
+                    _logger.LogDebug($"{accountId} has sufficient balance for the order");
 
                     using (var scope = _serviceProvider.CreateScope())
                     {
                         var _bitcoin = scope.ServiceProvider.GetRequiredService<BitcoinService>();
-                        if (await _bitcoin.BitarCanMakePayment(id, coins))
+                        if (await _bitcoin.BitarCanMakePayment(accountId, coins))
                         {
-                            accountData.Balance -= isk;
+                            account.Balance -= isk;
                             await _context.SaveChangesAsync();
 
-                            ExtKey key = _bitcoin._masterKey.Derive(new KeyPath($"m/84'/0'/{accountData.Derivation}'/0/0"));
+                            ExtKey key = _bitcoin._masterKey.Derive(new KeyPath($"m/84'/0'/{account.Derivation}'/0/0"));
                             var receiver = key.PrivateKey.PubKey.GetSegwitAddress(Network.Main);
 
-                            var result = await _bitcoin.SendBitcoin("4708180420", receiver, coins, 36);
+                            int bitarAccountId = 0;
+                            var result = await _bitcoin.SendBitcoin(0, receiver, coins, 36);
 
                             if (result != null)
                             {
@@ -128,7 +129,7 @@ namespace Bitar.Repositories
                                 $"Type: {mtx.Type}\n" +
                                 $"Status: {mtx.Status}");
 
-                            accountData.MarketTransactions.Add(mtx);
+                            account.MarketTransactions.Add(mtx);
                             await _context.SaveChangesAsync();
                             return result;
                         }
@@ -139,19 +140,19 @@ namespace Bitar.Repositories
                 {
                     _logger.LogCritical(
                         "Order cancelled.\n" +
-                        $"{id} does not have sufficient balance for the order.\n" +
+                        $"{accountId} does not have sufficient balance for the order.\n" +
                         $"Order => {coins} BTC for {isk} ISK.\n" +
-                        $"Current balance: {accountData.Balance} ISK.");
+                        $"Current balance: {account.Balance} ISK.");
 
                     mtx.Status = TransactionStatus.Rejected;
-                    accountData.MarketTransactions.Add(mtx);
+                    account.MarketTransactions.Add(mtx);
                     await _context.SaveChangesAsync();
                     return null;
                 }
             }
             catch (DbUpdateConcurrencyException)
             {
-                _logger.LogError($"DbUpdateConcurrencyException: {id} {isk} ISK order cancelled.");
+                _logger.LogError($"DbUpdateConcurrencyException: {accountId} {isk} ISK order cancelled.");
             }
 
             return null;
