@@ -93,8 +93,7 @@ builder.Services.AddCors(options =>
             builder.WithOrigins("https://bitar.is",
                 "https://www.bitar.is",
                 "http://localhost:4200",
-                "https://innskraning.island.is",
-                "https://mrin9.github.io")
+                "https://innskraning.island.is")
                 .AllowAnyHeader()
                 .AllowAnyMethod()
                 .AllowCredentials();
