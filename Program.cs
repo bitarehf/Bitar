@@ -85,7 +85,21 @@ builder.Services.AddSingleton<TickerService>();
 builder.Services.AddSingleton<OhlcService>();
 builder.Services.AddHostedService<MarketService>();
 
-
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(
+        builder =>
+        {
+            builder.WithOrigins("https://bitar.is",
+                "https://www.bitar.is",
+                "http://localhost:4200",
+                "https://innskraning.island.is",
+                "https://mrin9.github.io/RapiPdf")
+                .AllowAnyHeader()
+                .AllowAnyMethod()
+                .AllowCredentials();
+        });
+});
 
 builder.Services.AddControllers();
 
@@ -115,6 +129,8 @@ app.UseForwardedHeaders();
 
 app.UseAuthentication();
 app.UseAuthorization();
+
+app.UseCors();
 
 app.MapControllers();
 app.MapHub<TickerHub>("/tickers");
