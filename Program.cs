@@ -94,7 +94,7 @@ builder.Services.AddCors(options =>
                 "https://www.bitar.is",
                 "http://localhost:4200",
                 "https://innskraning.island.is",
-                "https://mrin9.github.io/RapiPdf")
+                "https://mrin9.github.io")
                 .AllowAnyHeader()
                 .AllowAnyMethod()
                 .AllowCredentials();
